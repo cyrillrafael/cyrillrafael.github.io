@@ -24,8 +24,10 @@ permalink: /studio/
       
       <div class="painting-info">
         <div class="title">{{ clean_title }}</div>
-        <div class="year">2025</div>
-        <div class="dimensions">studio documentation</div>
+        <div class="meta-row">
+          <span class="year">2025</span>
+          <span class="dimensions">studio documentation</span>
+        </div>
       </div>
     </div>
   {% endfor %}
