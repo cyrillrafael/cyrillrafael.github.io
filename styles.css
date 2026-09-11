@@ -33,7 +33,7 @@ body {
   padding: 2em;
   max-width: 600px;
   margin: 0 auto;
-  font-size: small;
+  font-size: 1.15rem;
 }
 
 /* Mobile-first: clean vertical ribbon layout for iPhones */
@@ -65,7 +65,7 @@ body {
     padding: 0 1em;
     margin-top: 0.5em;
     margin-bottom: 2em;
-    font-size: 1.2ex;
+    font-size: 0.8rem;
   }
 
   /* Tighter spacing between title elements on mobile */
@@ -73,7 +73,6 @@ body {
   .dimensions,
   .year {
     margin-right: 0.3em;
-    font-size: 0.9em;
   }
 
   /* Reduce gallery gap on mobile */
@@ -146,7 +145,7 @@ body {
 .painting-info {
   margin-top: 0.8em; /* Less space above title */
   margin-bottom: 2.5em; /* More space below title (before next painting) */
-  font-size: 1.4ex;
+  font-size: 0.85rem;
   white-space: nowrap; /* Keep title/year/dimensions on single line */
   overflow: hidden;
   text-overflow: ellipsis;
@@ -202,7 +201,7 @@ body {
 .dimensions,
 .year {
   margin-right: 0.5em;
-  color: #333;
+  color: #1a1a1a;
   font-weight: bold;
   opacity: 1;
   display: inline-block;
@@ -221,6 +220,12 @@ body {
   background-position: center; /* Centers the background image */
   min-height: 100vh; /* Ensures the container takes up at least the full height of the viewport */
  }
+
+/* Keep the painted texture visible while giving the text enough contrast to read */
+.painted-background .content {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+}
  
  
 a {
