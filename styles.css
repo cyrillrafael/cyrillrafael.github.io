@@ -7,8 +7,18 @@ html, body {
 body {
   font-family: 'Menlo', 'Courier New', monospace;
   font-size: 2.5rem;
-  background: linear-gradient(to bottom, white, lightgray) no-repeat fixed;
-  background-size: 100% 100%;
+  /* Retinted to match the actual off-white fakewall the paintings are
+     photographed against (sampled from wall margins across several 2026
+     photos: consistently ~#f2f1ef, not a neutral white/gray) -- plus a
+     faint SVG noise grain standing in for the backdrop's fabric texture,
+     rather than risking a visibly-seamed crop from a real photo. */
+  background-color: #eeece8;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(to bottom, #f6f5f2, #e9e7e3);
+  background-repeat: repeat, no-repeat;
+  background-attachment: fixed, fixed;
+  background-size: 140px 140px, 100% 100%;
 }
 
 .horizontal-list {
@@ -237,7 +247,7 @@ body {
 
 /* Keep the painted texture visible while giving the text enough contrast to read */
 .painted-background .content {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(246, 245, 242, 0.85);
   border-radius: 4px;
 }
  
