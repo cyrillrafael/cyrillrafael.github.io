@@ -60,12 +60,16 @@ body {
     margin-bottom: 1.5em;
   }
 
-  /* Compact title info on single line */
+  /* Wrap onto a second line rather than truncating — a long title must not
+     push the dimensions off into an ellipsis */
   .painting-info {
     padding: 0 1em;
     margin-top: 0.5em;
     margin-bottom: 2em;
     font-size: 0.8rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   /* Tighter spacing between title elements on mobile */
