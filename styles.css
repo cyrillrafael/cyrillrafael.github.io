@@ -60,16 +60,15 @@ body {
     margin-bottom: 1.5em;
   }
 
-  /* Wrap onto a second line rather than truncating — a long title must not
-     push the dimensions off into an ellipsis */
+  /* Single line always, sized per-caption from --cap-len (set inline in
+     paintings.md) so a long title shrinks just enough to fit instead of
+     truncating the dimensions off the end, or shrinking every caption to
+     whatever the single longest title needs. */
   .painting-info {
-    padding: 0 1em;
+    padding: 0 0.6em;
     margin-top: 0.5em;
     margin-bottom: 2em;
-    font-size: 0.8rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+    font-size: clamp(0.55rem, calc(340px / (var(--cap-len, 40) * 0.62)), 0.95rem);
   }
 
   /* Tighter spacing between title elements on mobile */

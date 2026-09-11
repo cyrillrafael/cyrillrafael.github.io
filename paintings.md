@@ -56,7 +56,14 @@ permalink: /paintings/
         onload="this.classList.add('loaded')"
       />
       
-      <div class="painting-info">
+      {%- comment -%}
+        Caption length drives the mobile font-size (see .painting-info in
+        styles.css) so a long title shrinks just enough to still fit on a
+        single line, instead of forcing every caption down to the size the
+        longest one needs.
+      {%- endcomment -%}
+      {%- assign cap_len = title | append: year | append: dims | size -%}
+      <div class="painting-info" style="--cap-len: {{ cap_len }};">
         <span class="title">{{ title }}</span>
         <span class="year">{{ year }}</span>
         <span class="dimensions">{{ dims }}</span>
