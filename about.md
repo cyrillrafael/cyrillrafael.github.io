@@ -15,4 +15,6 @@ With my&nbsp;work&nbsp;I hope to&nbsp;achieve a&nbsp;somatic, visceral response.
 <br/>
 My&nbsp;subject matter is&nbsp;informed by&nbsp;pareidolic imagery and a&nbsp;matrix of&nbsp;mythopoetic and everyday fascinations. I&nbsp;prefer to&nbsp;work with large surfaces which could be&nbsp;related to&nbsp;both as&nbsp;bodies and spaces in&nbsp;the context of&nbsp;the installation, and always strife to&nbsp;emphasise the character and qualities of&nbsp;the materials I&nbsp;use, and celebrate the gift of&nbsp;vision, which can open&nbsp;us in&nbsp;such profound ways to&nbsp;the realities we&nbsp;live&nbsp;in.&raquo;
 <br/>
+<br/>
+Read the interview &laquo;<a href="https://www.jacksonsart.com/blog/2026/08/26/cyrill-rafael-vasilyev-permeable-worlds/" target="_blank" rel="noopener">Permeable Worlds</a>&raquo; on the Jackson&rsquo;s Art blog.
 </div>
