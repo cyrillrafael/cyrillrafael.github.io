@@ -60,22 +60,18 @@ body {
     margin-bottom: 1.5em;
   }
 
-  /* Single line always, sized per-caption from --cap-len (set inline in
-     paintings.md) so a long title shrinks just enough to fit instead of
-     truncating the dimensions off the end, or shrinking every caption to
-     whatever the single longest title needs. */
   .painting-info {
-    padding: 0 0.6em;
+    padding: 0 1em;
     margin-top: 0.5em;
     margin-bottom: 2em;
-    font-size: clamp(0.55rem, calc(340px / (var(--cap-len, 40) * 0.62)), 0.95rem);
   }
 
-  /* Tighter spacing between title elements on mobile */
-  .title,
-  .dimensions,
-  .year {
-    margin-right: 0.3em;
+  .painting-info .title {
+    font-size: 0.85rem;
+  }
+
+  .painting-info .meta-row {
+    font-size: 0.72rem;
   }
 
   /* Reduce gallery gap on mobile */
@@ -148,10 +144,22 @@ body {
 .painting-info {
   margin-top: 0.8em; /* Less space above title */
   margin-bottom: 2.5em; /* More space below title (before next painting) */
-  font-size: 0.85rem;
-  white-space: nowrap; /* Keep title/year/dimensions on single line */
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 32em;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1em;
+}
+
+.painting-info .title {
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.painting-info .meta-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.3em;
+  font-size: 0.8rem;
 }
 
 .painting img {
@@ -200,14 +208,17 @@ body {
   100% { background-position: -200% 0; }
 }
 
-.title,
+.title {
+  color: #1a1a1a;
+  font-weight: bold;
+  display: block;
+}
+
 .dimensions,
 .year {
-  margin-right: 0.5em;
   color: #1a1a1a;
   font-weight: bold;
   opacity: 1;
-  display: inline-block;
 }
 
 .about-page {
