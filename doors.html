@@ -246,9 +246,19 @@ const st = {
   off: 0, offV: 0, offTarget: 0, jx: 0,
   trouble: null, spill: 0, spillTarget: 0, jolt: null, lastPoke: 0,
   // rough handling: +1 per tap, wiggle or flip, draining 1 per 2.5 s; past ~20 the tape starts to suffer
-  abuse: 0, abuseBand: 0,
+  abuse: 0, abuseBand: 0, gentle: 0, lastTap: -1e9, plays: 0,
 };
 const bases = SIDES.map(buildBase);
+// where each side's tape is cued before anything has loaded (side B starts mid-show)
+const cuedAt = i => (SIDES[i].tracks[0].start || 0) / SIDES[i].total;
+st.pShown = SIDES.map((_, i) => cuedAt(i));
+// the audio clock as a fraction of the side, or null while a track is loading
+function tapeProgress(i) {
+  const a = audio[i];
+  if (!a.getAttribute("src")) return cuedAt(i);
+  if (a.readyState < 1 || a.seeking) return null;
+  return progress(i);
+}
 const frame = mk(W, H);
 
 // ---------- positions along a side ----------
@@ -277,11 +287,15 @@ function packRadii(p) {
 }
 
 // ---------- the moving parts ----------
+// the pack's rim is drawn to a fraction of a pixel (ordered dither), so a
+// few seconds of tape visibly add to one pack and take from the other
+const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
 function drawPack(c, r, ang) {
-  const R = Math.ceil(r);
+  const R = Math.ceil(r) + 1;
   for (let y = -R; y <= R; y++) for (let x = -R; x <= R; x++) {
-    const d = Math.sqrt(x * x + y * y);
-    if (d > r) continue;
+    const d = Math.sqrt(x * x + y * y), cover = r + 0.5 - d;
+    if (cover <= 0) continue;
+    if (cover < 1 && (BAYER4[(y + 8) & 3][(x + 8) & 3] + 0.5) / 16 > cover) continue;
     px(c.x + x, c.y + y, d > r - 1 ? "#5e4433" : (d * 1.4 | 0) % 3 === 0 ? "#42301f" : "#4a3426");
   }
   for (let k = 0; k < 4; k++) {
@@ -310,7 +324,7 @@ function drawCassette(t, i) {
   g = frame.getContext("2d");
   g.clearRect(0, 0, W, H);
   g.drawImage(bases[i], 0, 0);
-  const [rL, rR] = packRadii(progress(i));
+  const [rL, rR] = packRadii(st.pShown[i]);
   g.save(); g.beginPath(); g.rect(WIN.x, WIN.y, WIN.w, WIN.h); g.clip();
   drawPack(HUB_L, rL, st.angL); drawPack(HUB_R, rR, st.angR);
   const tl = tangent(HUB_L, rL, ROLL_L, true), tr = tangent(HUB_R, rR, ROLL_R, false);
@@ -398,7 +412,7 @@ function drawMeter(t) {
   g = mg;
   rect(1, 0, MW - 2, MH, "#2b2926"); rect(0, 1, MW, MH - 2, "#2b2926");
   rect(2, 2, 15, 7, "#141312");
-  const n = Math.floor(sidePos(st.side) / 3) % 1000;
+  const n = Math.floor(st.pShown[st.side] * SIDES[st.side].total / 3) % 1000;
   text(String(n).padStart(3, "0"), 4, 3, "#e6dabd");
   const flicker = (st.trouble && (t / 90 | 0) % 3 === 0) || hash01(t / 90 | 0) < distortion() * 0.4;
   for (let ch = 0; ch < 2; ch++) {
@@ -551,47 +565,55 @@ function readLevels(dt, t) {
   }
 }
 
-// ---------- trouble: a small chance per play that the deck acts up ----------
+// ---------- trouble: a rare glitch, and wear from careless handling ----------
+// The contract: it mostly plays normally, and three gently paced taps (each
+// 0.35-2.5 s after the last) always set it right, whatever state it is in.
+// Rushed taps (< 0.35 s apart) and rough wiggling are what wear it down.
 // Forced for testing with #glitch=spill | stick | mud in the URL.
 const TROUBLE = {
-  spill: { pokes: [2, 3], msg: "the deck is eating the tape · poke it" },
-  stick: { pokes: [2, 3], msg: "the reels are sticking · give it a tap" },
-  mud:   { pokes: [2, 3], msg: "it has gone muddy · tap to reseat it" },
+  spill: "the deck is eating the tape",
+  stick: "the reels are sticking",
+  mud:   "it has gone muddy",
 };
+const GENTLE_MIN = 350, GENTLE_MAX = 2500;
 const forced = (location.hash.match(/glitch=(\w+)/) || [])[1];
 function maybeTrouble() {
-  if (st.trouble || !(forced || Math.random() < 0.04)) return;
+  st.plays++;
+  if (st.trouble || !(forced || (st.plays > 1 && Math.random() < 0.03))) return;
   const kinds = Object.keys(TROUBLE), kind = TROUBLE[forced] ? forced : kinds[Math.random() * kinds.length | 0];
   setTimeout(() => { if (st.playing && !st.trouble) startTrouble(kind); }, forced ? 1200 : 2000 + Math.random() * 9000);
 }
 function startTrouble(kind) {
-  const [lo, hi] = TROUBLE[kind].pokes;
-  st.trouble = { kind, left: lo + (Math.random() * (hi - lo + 1) | 0) };
+  st.trouble = { kind }; st.gentle = 0;
   if (kind === "spill") st.spillTarget = 13 + Math.random() * 5;
-  if (kind === "mud" && wired[st.side]) wired[st.side].lp.frequency.setTargetAtTime(900, ac.currentTime, 0.2);
-  status(TROUBLE[kind].msg);
+  status(TROUBLE[kind] + " · three slow taps");
   click("clack"); kick();
 }
+const unwell = () => st.trouble || distortion() > 0;
 function poke() {
   const now = performance.now();
   if (now - st.lastPoke < 110) return;
   st.lastPoke = now;
   st.jolt = { t0: now, dx: (Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * 2 | 0)), dy: -1 - (Math.random() * 2 | 0) };
-  click("clack");
-  if (!st.trouble) return kick();
-  if (--st.trouble.left <= 0) {
-    st.spillTarget = 0;
-    for (const w of wired) if (w) w.lp.frequency.setTargetAtTime(9500, ac.currentTime, 0.15);
-    audio.forEach(a => (a.volume = 1));
-    st.trouble = null;
-    status("there.");
-    setTimeout(() => { if (!st.trouble) status(""); }, 1800);
-  } else {
-    if (st.trouble.kind === "spill") st.spillTarget *= 0.72;
-    status(TROUBLE[st.trouble.kind].msg + " " + "·".repeat(st.trouble.left));
-  }
+  click("clack"); kick();
+}
+// a tap while something is wrong: count the gentle streak, mend on the third
+function tend() {
+  poke();
+  if (st.gentle >= 3) return mend();
+  if (st.trouble?.kind === "spill") st.spillTarget = Math.max(4, st.spillTarget * 0.7);
+  const what = st.trouble ? TROUBLE[st.trouble.kind] : ABUSE_MSG[st.abuseBand] || "careful…";
+  status(st.gentle ? `${what} · ${"●".repeat(st.gentle)}${"○".repeat(3 - st.gentle)}` : `${what} · slower · three slow taps`);
+}
+function mend() {
+  st.trouble = null; st.abuse = 0; st.abuseBand = 0; st.gentle = 0; st.spillTarget = 0;
+  for (const w of wired) if (w) w.lp.frequency.setTargetAtTime(9500, ac.currentTime, 0.15);
+  audio.forEach(a => (a.volume = 1));
+  status("there.");
+  setTimeout(() => { if (!unwell()) status(""); }, 1800);
   kick();
 }
+function rough() { st.abuse += 1; st.gentle = 0; poke(); }
 function status(s) { document.getElementById("status").textContent = s; }
 
 // ---------- the loop (runs only while something moves) ----------
@@ -634,7 +656,13 @@ function tick(t) {
   if (tk === "stick") want *= ((t / 170) | 0) % 3 === 0 ? 0.08 : 1;
   if (tk === "spill") want *= 0.55 + 0.45 * Math.sin(t / 130);
   st.speed += (want - st.speed) * (1 - Math.exp(-dt / (st.scrubbing ? 0.06 : 0.2)));
-  const [rL, rR] = packRadii(progress(i));
+  // the packs: while the tape is in hand they follow the hand, otherwise the
+  // audio clock; eased, and held still while a new track is loading
+  for (let s = 0; s < 2; s++) {
+    const p = s === i && (st.scrubbing || st.cue) ? st.scrubPos / SIDES[s].total : tapeProgress(s);
+    if (p !== null) st.pShown[s] += (p - st.pShown[s]) * (1 - Math.exp(-dt / (st.scrubbing ? 0.05 : 0.25)));
+  }
+  const [rL, rR] = packRadii(st.pShown[i]);
   st.angL += st.speed * V / rL * dt;    // constant tape speed: the smaller pack spins faster
   st.angR += st.speed * V / rR * dt;
   st.angRoll += st.speed * V / 2 * dt;
@@ -707,19 +735,26 @@ function pause() {
   kick();
 }
 function toggle() { click("clunk"); st.playing ? pause() : play(); }
-function tap() { handled(); if (st.trouble) poke(); else toggle(); }
-function handled() { st.abuse += 1; kick(); }
+function tap() {
+  const now = performance.now(), gap = now - st.lastTap;
+  st.lastTap = now;
+  if (gap < GENTLE_MIN) { st.abuse += 1; st.gentle = 0; }        // rushed: wear, and the streak starts over
+  else st.gentle = gap <= GENTLE_MAX ? st.gentle + 1 : 1;
+  if (unwell()) tend(); else toggle();
+  kick();
+}
 const hash01 = n => { let h = Math.imul(n | 0, 2654435761); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
 // distortion from rough handling: 0 below ~20 handlings, 1 by ~45
 const distortion = () => Math.max(0, Math.min(1, (st.abuse - 20) / 25));
-const ABUSE_MSG = ["", "careful…", "you're chewing it up", "it's mangled · let it rest"];
+const ABUSE_MSG = ["", "careful…", "you're chewing it up", "it's mangled"];
 function abuseStatus() {
   const d = distortion(), band = d <= 0 ? 0 : d < 0.4 ? 1 : d < 0.85 ? 2 : 3;
   if (band === st.abuseBand) return;
   const healing = band < st.abuseBand;
+  if (!st.abuseBand && band) st.gentle = 0;                    // the mending streak starts fresh
   st.abuseBand = band;
   if (st.trouble) return;
-  status(band ? ABUSE_MSG[band] : healing ? "it's settling" : "");
+  status(band ? ABUSE_MSG[band] + " · three slow taps" : healing ? "it's settling" : "");
   if (!band && healing) setTimeout(() => { if (!st.abuseBand && !st.trouble) status(""); }, 1800);
 }
 
@@ -727,7 +762,6 @@ function abuseStatus() {
 function startFlipDrag() {
   st.resumeAfterFlip = st.resumeAfterFlip || st.playing;
   if (st.playing) pause();
-  handled();
   st.flipDrag = true; st.thetaGrab = st.flipCommit !== null ? st.theta : 0; st.flipCommit = null; st.thetaTarget = st.theta;
   kick();
 }
@@ -740,7 +774,6 @@ function endFlipDrag(vel) {
 }
 function flipBy(dir) {
   if (st.flipCommit !== null || st.flipDrag) return;
-  handled();
   st.resumeAfterFlip = st.playing;
   if (st.playing) pause();
   click("tick");
@@ -834,7 +867,7 @@ cv.addEventListener("pointermove", e => {
   if (ptr.axis === "jiggle") {
     st.jx = Math.round(Math.tanh(dx / (k * 30)) * 3);
     const dir = Math.sign(mdx);
-    if (dir && Math.abs(mdx) > 2) { if (ptr.lastDir && dir !== ptr.lastDir) { handled(); poke(); } ptr.lastDir = dir; }
+    if (dir && Math.abs(mdx) > 2) { if (ptr.lastDir && dir !== ptr.lastDir) rough(); ptr.lastDir = dir; }
   }
   kick();
 });
