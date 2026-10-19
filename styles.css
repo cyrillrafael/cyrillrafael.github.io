@@ -272,6 +272,25 @@ body {
   opacity: 1;
 }
 
+/* Deadline timeline: passed rows fade, rows due within 30 days are flagged */
+tr.is-past {
+  opacity: 0.4;
+}
+
+tr.is-past time {
+  text-decoration: line-through;
+}
+
+.deadline-label {
+  display: block;
+  font-size: 0.75em;
+  font-weight: bold;
+}
+
+tr.is-soon .deadline-label {
+  color: #a3261b;
+}
+
 /* Section links: a quiet "#" that appears on hover */
 .heading-anchor {
   margin-left: 0.35em;
@@ -282,6 +301,7 @@ body {
 
 h2:hover .heading-anchor,
 h3:hover .heading-anchor,
+h4:hover .heading-anchor,
 .heading-anchor:focus {
   opacity: 0.4;
 }

@@ -2,7 +2,7 @@
 layout: text
 title: Artist Resources
 permalink: /resources/
-redirect_from: /webshop/
+noindex: true
 scripts:
   - /assets/js/resources.js
 ---
@@ -10,6 +10,171 @@ scripts:
 # Artist Resources & Grant Preparation
 
 *Private reference page for applications, residencies, and professional development.*
+
+---
+
+## At a Glance
+
+*Researched 20 October 2026, after the move to Dalian. Every date below was read from the programme's own page unless the Status column says **Expected** — those are estimated from the previous cycle and should be re-checked when the call is posted. Deadlines that have passed are struck through automatically; deadlines within 30 days are flagged.*
+
+<div class="featured-grant" markdown="1">
+**Pollock-Krasner Foundation Grant — up to $50,000** (most around $35,000) for one year. Worldwide, any age, no deadline — [apply any time](#pollock-krasner-foundation-grant); decision in 9–12 months.
+</div>
+
+<div class="featured-grant" markdown="1">
+**Rijksakademie Residency 2028 — ~€19,800 a year** plus €2,500 work budget, for one or two years in Amsterdam. Call [opens 1 January 2027](#rijksakademie-residency-2028); no application fee from China.
+</div>
+
+---
+
+## Timeline
+
+{: .timeline}
+| Deadline | Opportunity | Gives | Status | Fit |
+|----------|-------------|-------|--------|-----|
+| <time datetime="2026-10-25">25 Oct 2026</time> | [ACC NEXT 2027](https://www.acc.go.kr/en/board/board.do?PID=1001&boardID=NOTICE&action=Read&idx=2866), Gwangju | KRW 3M fee, materials, flights | Confirmed | Requires an Asian nationality — ask ACC first |
+| <time datetime="2026-10-30">30 Oct 2026</time> | [Art Explora × Cité internationale des arts](#art-explora), Paris | €1,000/month, €3,000 production, studio, return trip | Confirmed | Strong — 5+ years practice, all nationalities |
+| <time datetime="2026-11-15">15 Nov 2026</time> | [Sixi International AIR](#sixi-international-air-nanjing), Nanjing | Flights, visa, housing, materials | Confirmed | Strong — inside China, any nationality |
+| <time datetime="2026-11-17">17 Nov 2026</time> | [Hopper Prize](https://hopperprize.org/), online | 2 × $4,500, 4 × $1,000 | Announced (third party) | Open worldwide; $40 fee |
+| <time datetime="2026-12-01">1 Dec 2026</time> | [Jan van Eyck Academie 2028](#jan-van-eyck-academie-2028), Maastricht | €1,500/month, €2,000 budget, studio apartment | Confirmed | Good — but €2,750 enrolment fee; live in Maastricht |
+| <time datetime="2026-12-15">15 Dec 2026</time> | [Triangle Arts Association](https://www.triangleartsnyc.org/2027-2028-open-call), Brooklyn | Studio only | Confirmed | Self-funded; US visa needed |
+| <time datetime="2026-12-28">~late Dec 2026</time> | [Aranya Winter Residency](https://www.aranyaartcenter.com/english/program-aranya-winter-residency-open-call-2025-2026), Hebei | Housing, studio, up to $1,000 production | Expected (last: 28 Dec 2025) | Outdoor large-scale work — strong fit |
+| <time datetime="2026-12-31">31 Dec 2026</time> | [A4 International Residency](#a4-international-residency-chengdu), Chengdu | Studio, housing, travel, ¥10,000 production | Confirmed | Autumn 2028 session only |
+| <time datetime="2027-01-15">~15 Jan 2027</time> | [De Ateliers 2027–2029](#de-ateliers), Amsterdam | ~€18,000/year stipend, production budget | Opens 1 Dec 2026; deadline expected | Aimed at early career — must argue the case |
+| <time datetime="2027-01-25">~25 Jan 2027</time> | [Fukuoka Asian Art Museum AIR](https://faam.city.fukuoka.lg.jp/en/residence/requirement/), Japan | Travel, housing, ¥2,400/day, up to ¥500,000 production | Expected (last: 25 Dec–25 Jan) | No nationality or residence limit; Japanese visa |
+| <time datetime="2027-01-31">~31 Jan 2027</time> | [Akiyoshidai Art Village](https://aiav.jp/en/11171/), Yamaguchi | Room and studio, no money | Expected (last: 31 Jan 2026) | Low value; needs outside funding |
+| <time datetime="2027-02-01">~1 Feb 2027</time> | [Rijksakademie 2028](#rijksakademie-residency-2028), Amsterdam | ~€19,800/year + €2,500 budget, 1–2 years | Opens 1 Jan 2027; deadline expected | Strong — the most valuable residency here |
+| <time datetime="2027-02-11">~11 Feb 2027</time> | [Jackson's Art Prize 2027](https://www.jacksonsart.com/artprize/), London | 31 awards; 2026 first prize £6,000 + £2,000 materials | Expected (last: 12 Nov–11 Feb) | Open worldwide, 2D work; pastel runner-up 2026 |
+| <time datetime="2027-02-18">~18 Feb 2027</time> | [ARKO Art Studio](https://www.arko.or.kr/artcenter/board/view/503?cid=716979), Seoul | ₩500,000/month living + ₩500,000 production, airfare, housing | Expected (last: 2–18 Feb) | Needs a 4-month Korean visa and unrestricted bank transfers |
+| <time datetime="2027-04-10">~10 Apr 2027</time> | [NEW AIR](https://artcenter-new.jp/event/new-air-2026-opencall/), Yokohama | ¥5,000/day, travel, production | Expected (last: 10 Mar–10 Apr) | For artists based in Asia outside Japan — fits |
+| <time datetime="2027-06-16">~16 Jun 2027</time> | [TOKAS Creator Residency](https://tokyoartsandspace.jp/en/archive/application/2026/20260430-317.html), Tokyo | Airfare, per diem, creative fee, room | Expected (last: 16 Jun 2026) | 5+ years practice; visa letter provided |
+| <time datetime="2027-06-30">~30 Jun 2027</time> | [AIR Taipei](https://air-artistvillage.org.tw/), Taiwan | Studio and housing only | Expected (last: 30 Mar–30 Jun) | Taiwan visa needed |
+| <time datetime="2027-07-15">~15 Jul 2027</time> | [ICCI Art Valley](https://icci.sjtu.edu.cn/en/event/view/90), Shanghai | ≥¥8,000, flight, housing, installation | Expected (last: 15 Jul 2026) | Painting prioritised; must donate 2 works |
+| <time datetime="2027-08-27">~27 Aug 2027</time> | [Mondriaan Residency grant](https://mondriaanfonds.nl/en/apply-for-a-grant/grants/residency), 2028 | Partner residencies incl. Beijing, Chengdu | Expected (last: 27 Aug 2026) | Only while embedded in Dutch practice |
+| <time datetime="2027-08-31">~31 Aug 2027</time> | [Kyoto Art Center AIR](https://www.kac.or.jp/en/open_call/), visual arts | Housing, studio, flight, ¥200,000 | Expected, low confidence | Visual arts call alternates years |
+| <time datetime="2027-09-15">~15 Sep 2027</time> | Dalian Youth Fine Art Exhibition (潮起新声) | Exhibition at Dalian Art Museum | Expected (last: 15 Sep 2026) | ≤45 and ≥1 year living in Dalian; entries to dlmeixie@163.com |
+| <time datetime="2027-10-11">~11 Oct 2027</time> | [Aesthetica Art Prize](https://aestheticamagazine.com/artprize/submit), York | £10,000 main prize | Expected (opens ~1 Dec 2026) | Open worldwide; £25 fee |
+| <time datetime="2027-11-14">~Nov 2027</time> | [Akademie Schloss Solitude](https://www.akademie-solitude.de/en/fellowship/application/), Stuttgart | Fellowship from autumn 2028 | Expected ("fall 2027") | Calls every two years |
+
+### Rolling
+
+| Opportunity | Gives | Notes |
+|-------------|-------|-------|
+| [Pollock-Krasner Foundation](#pollock-krasner-foundation-grant) | Up to $50,000 | No deadline; 9–12 months to decision |
+| [Swatch Art Peace Hotel](https://www.swatch-art-peace-hotel.com/en/apply), Shanghai | 3–6 months in a studio apartment | No deadline; allow 12 weeks; CHF 30 fee to MSF; project must connect to Shanghai |
+| [Inside-Out Art Museum](https://www.ioam.org.cn/?p=11885), Beijing | 10–90 days; self-funded (~¥3,000/month housing) | Invitation letter for outside funders; info@ioam.org.cn |
+| [Sapporo Tenjinyama Art Studio](https://tenjinyamastudio.jp/apartment) | Pay-to-stay studio from ¥430/day | Apply 12 months to 3 days ahead; up to 90 days |
+| [Künstlerhaus Bethanien](https://bethanien.de/en/application/), Berlin | Letter of interest only | Needs an external funder to pay the place |
+| [Mondriaan Fund individual grants](#mondriaan-fund) | €2,500 – €50,000 | Only while embedded in Dutch practice, with a BRP extract under one year old |
+| [Togatta TR-044](https://www.tr044.org), Japan | Residency | Permanent open call (past host) |
+| [Pilotenkueche](https://www.pilotenkueche.net/), Leipzig | Residency | Rolling, quarterly (past host) |
+
+---
+
+## Opportunity Profiles
+
+Requirements below are extracted from each programme's own call. Word, page and file limits are quoted exactly.
+
+### International
+
+#### Pollock-Krasner Foundation Grant
+
+- **Gives:** up to $50,000 for one year, unrestricted; most grants around $35,000
+- **When:** no deadlines; decision in 9–12 months; after a decline, wait 2 years
+- **Eligibility:** painters and other visual artists, any age, worldwide; **at least 10 exhibitions in the past 10 years** at professional venues (the CV lists 24 since 2016)
+- **Nationality:** citizens or residents of US-sanctioned countries must contact the foundation before applying — applying after Dutch citizenship comes through avoids the question
+- **Submit:** one-page cover letter; CV with solo and group shows in separate sections; one-page statement; image list; exactly 10 JPEGs, longest side 2100 px, at most 2 detail or installation views, all from the last 10 years; 3 reference contacts
+- **How:** online, English, no fee — [pkf.org/how-to-apply](https://www.pkf.org/how-to-apply/)
+
+#### Art Explora × Cité internationale des arts {#art-explora}
+
+- **Gives:** ~50 m² live-work studio in Paris, €1,000/month, €3,000 production grant, return trip; 3 or 6 months
+- **When:** deadline 30 October 2026, 23:59 Paris time; results January 2027 (session 1, March–August 2027) or June 2027 (session 2, September 2027–February 2028)
+- **Eligibility:** all nationalities, no age limit; 5+ years of practice and international presentation of work; the jury weighs why being in France matters
+- **Submit:** project description, "2 pages maximum", including why France; portfolio, "15 pages maximum"; CV, "2 pages maximum"; audience activities summary, "1,500 characters maximum (including spaces)"; in English
+- **If selected:** the open studios (February and June) are mandatory; propose one workshop or intervention
+- **How:** free, online form that cannot be edited once finalised — [call PDF](https://cdn.prod.website-files.com/6107fc8664b5410e82635537/6aad537c9404c9c3a634bbb4_Opencall.pdf) · [apply](https://artexplora.plateformecandidature.com/)
+
+### Netherlands
+
+#### Jan van Eyck Academie 2028
+
+- **Gives:** 11 months in Maastricht (15 January – 15 December 2028); €1,500/month stipend with rent deducted, €2,000/year work budget, studio apartment, visa support
+- **When:** deadline 1 December 2026, 23:59 CET; selection mid-May 2027
+- **Costs:** application fee €65 excl. VAT; **enrolment fee €2,750 excl. VAT** if selected
+- **Eligibility:** must live in Maastricht during the residency; Rijksakademie and De Ateliers alumni excluded
+- **Submit:** artist statement 250 words / 1,400 characters; motivation 500 words / 3,150 characters; proposal 500 words / 3,150 characters — or instead one video/audio file, max 8 min; one PDF, max 10 MB: max 25 pages of work from the last 5 years plus a 2-page CV, landscape, 1–2 works per page, captioned; links must stay live for 3 months
+- **How:** Dapple account, English — [call](https://janvaneyck.nl/calendar/apply-now-jve-residency-2028) · [apply](https://app.dapplehq.com/o/jan-van-eyck-academie)
+
+#### Rijksakademie Residency 2028
+
+- **Gives:** ~€19,800/year stipend and €2,500/year work budget (2026 figures), minus a €1,875/year participation fee; one year, with an option of a second
+- **When:** call opens 1 January 2027; last year's deadline was 1 February — expect similar
+- **Eligibility:** all nationalities, no age limit (most applicants 26–35; over-36s should explain the timing); half the places go to Dutch nationals or those who lived and worked in the Netherlands ≥2 years — ask application@rijksakademie.nl whether that still counts after moving; max 3 applications per lifetime; taking JvE or De Ateliers bars you
+- **Costs:** no €60 fee for applicants living in China (OECD DAC list)
+- **Submit:** round 1 is portfolio only; later rounds add texts, motivation, an intro video and an interview; upload limits not yet published
+- **How:** online portal — [rijksakademie.nl/apply](https://www.rijksakademie.nl/en/residency-apply/apply)
+
+#### De Ateliers
+
+- **Gives:** two-year programme in Amsterdam (2027–2029); stipend ~€18,000/year (the site quotes both €17,916 and €18,804), €2,100/year production, residence permit paid; €3,200 fee
+- **When:** opens 1 December 2026; last deadline 15 January 2026, 23:59 CET — expect mid-January
+- **Eligibility:** participants are "usually 20 to 30" — make the case for this stage of the practice; Rijksakademie and JvE alumni excluded
+- **Submit:** €65 fee; online form in four parts (personal data, portfolio and statement, motivation, submit); good English
+- **How:** [de-ateliers.nl/apply](https://de-ateliers.nl/en/apply/)
+
+#### Mondriaan Fund
+
+- **Rule that decides everything:** every grant requires being *"ingebed in de professionele beeldende kunst in Nederland"*; for Artist Basic this is re-tested at each instalment ([art. 5(4)](https://wetten.overheid.nl/BWBR0044554/)); non-Dutch nationals attach a BRP extract under one year old — a requirement that falls away with Dutch citizenship — [terms](https://www.mondriaanfonds.nl/en/apply-for-a-grant/terms-and-conditions/)
+- **[Artist Basic](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/artist-basic/):** €50,000 over 2–4 years; ≥4 years practice; taxable income ≤ €55,000 in each of the previous 2 years; once per 4 years
+- **[Artist Project](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/artist-project/):** €2,785/month for up to 6 months (max €16,710), or budget-based up to 12 months; a work stay abroad is fundable
+- **[International Art Presentation](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/international-art-presentation/):** travel, transport, lodging up to €1,000, 50% of new production for a show at a recognised foreign institution
+- **[Voucher International](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/voucher-international/):** up to €2,500 travel for an invited talk abroad; apply 4 months to 5 weeks ahead
+- **Ask before applying:** *"If a recipient relocates to China for X months while keeping Dutch exhibitions, gallery and network, are they still ingebed under art. 6(1) of the Algemeen Reglement and art. 5(4) of the Artist Basic scheme?"*
+
+### China
+
+#### Sixi International AIR, Nanjing
+
+- **Gives:** visa fees, return flights, insurance, apartment or loft studio, translation, materials allowance (no amounts stated); about 3 months, March–May or September–November 2027
+- **When:** deadline 15 November 2026 (GMT+8); results by mid-February 2027
+- **Eligibility:** any nationality, 18+; Mandarin or English good enough for research; the proposal must address one of the call's two themes
+- **Submit:** CV with photo; portfolio; proposal (motivation, plan, concept, materials, preferred period); English, plus Chinese if possible; no image, word or file-size limits
+- **If selected:** artist talk, workshop and open studio; a "tangible and presentable outcome"; donate a selection of works made during the residency
+- **How:** one PDF or ZIP to info@siximuseum.com, subject "Residency Application"; no fee; a video interview may follow — [siximuseum.com/residency](https://siximuseum.com/en/residency/)
+
+#### A4 International Residency, Chengdu
+
+- **Gives:** fellowship track — studio, housing, economy flight or second-class train within a budget, ¥10,000 production grant; light track — studio and housing only; at least 8 weeks, July–October 2028
+- **When:** deadline 31 December 2026 (autumn 2028 session; the 2027 sessions closed 30 June 2026)
+- **Eligibility:** no nationality limit stated
+- **Submit:** everything in English **and** Chinese; photo; portfolio; application form (.doc); CV stressing community and brand work; detailed proposal covering community or commercial engagement
+- **If selected:** 1–2 public or participatory activities, open studio, field trip, filming and interviews
+- **How:** a4residency@a4am.cn, subject "A4 International Residency Application – [Name] – 2028 Autumn" — [call](https://www.a4artmuseum.com/en/a4-residencyartcenter/residing/latest-recruitment/)
+
+---
+
+## Where He Stands: Dalian and Dutch Citizenship
+
+- **Dutch citizenship (imminent):** removes the BRP-extract requirement Mondriaan sets for non-Dutch nationals, removes visa friction for Japan, Korea, Taiwan and the EU, and settles the sanctions question some foundations ask. It does not change residence-based rules (Stroom, Culture Moves Europe).
+- **Dutch funding:** Mondriaan has no residence rule, but every scheme requires being embedded in Dutch professional practice, re-tested at each Artist Basic instalment. Dutch rules require leaving the population register (BRP) after more than 8 months a year abroad; deregistering very likely ends access to Mondriaan and Stroom.
+- **Stroom Den Haag:** PRO Research requires living in The Hague; PRO Art Projects (up to €10,000) accepts outside applicants only for a project that contributes to the Hague arts climate — [stroom.nl](https://stroom.nl/en/stroom-for-artists/financial-support/pro-art-projects).
+- **China:** national programmes (NAMOC, China National Arts Fund, Huayu Youth Award) are for PRC citizens; privately run residencies are open.
+- **Selling work in China** on a non-work visa: no source says whether sales or stipends count as employment (就业). Ask the Dalian exit-entry bureau or a PRC lawyer first.
+- **Visas until the Dutch passport arrives:** on the Russian passport, Japan, Korea and Taiwan require visas and Korea's 60 days visa-free is too short for ARKO; TOKAS, Fukuoka and NEW AIR provide invitation paperwork. Time applications so travel falls after naturalisation where possible.
+- **Dutch Embassy Beijing:** €1,500–10,000 for NL–China cultural projects, but only organisations apply — a Dutch or Chinese institution must lead; letter of intent to PEK-CCO@minbuza.nl — [netherlandsandyou.nl](https://www.netherlandsandyou.nl/web/china-en/financial-support-for-cultural-exchange).
+
+## Ruled Out (and Why)
+
+- **Royal Painting Prize** — 2027 closed 31 August 2026; the under-35 limit rules out 2028 onward, even as a Dutch national
+- **Asian Cultural Council** ($35,000) — requires citizenship or *permanent* residence in a listed country; reconsider only with Chinese permanent residence
+- **Prix de Rome** (€60,000) and **Cultuurfonds Talentprijs** (€20,000) — jury-selected, no applications
+- **Culture Moves Europe**, **Stokroos**, **Amarte** — require legal residence in Europe / the Netherlands
+- **Japan Foundation Asia fellowship** — Japan/ASEAN only; **Tai Kwun** — Hong Kong ID needed; **Rimbun Dahan** — ASEAN only
+- **Sovereign Asian Art Prize** — needs a nominator, gallery representation and 3+ solo shows
+- **Gottlieb** — 20+ years of practice; **Joan Mitchell** — US nomination only; **ISCP** — sponsor must pay
+- **Huayu Youth Award, K11 Artist Prize, NAMOC** — Chinese / Asian nationals only
+- **Chinese art fairs** (ART021, West Bund, JINGART) — booths go to galleries
 
 ---
 
@@ -37,6 +202,10 @@ scripts:
 - [seelab.nl](http://www.seelab.nl/) | [@seelab_thehague](https://www.instagram.com/seelab_thehague/)
 
 ### Group Exhibitions & Recognition
+
+**2026 — Jackson's Art Prize, Pastel Runner Up**
+- For *Most Peculiar Circumstance*
+- Interview: [Permeable Worlds](https://www.jacksonsart.com/blog/2026/08/26/cyrill-rafael-vasilyev-permeable-worlds/), Jackson's Art blog
 
 **2022 — Garden of Stars, Sterrentuin, The Hague**
 - Outdoor exhibition curated by Shani Leseman
@@ -118,101 +287,6 @@ No Dalian venue publishes a proposal process or open call — approach in person
 | Yalu River Art Museum (鸭绿江美术馆) | Dandong | Private, contemporary; annual single-artist programme |
 | Aranya Art Center (阿那亚艺术中心) | Qinhuangdao | Major contemporary venue; 2026 programme includes foreign artists — [aranyaartcenter.com](https://aranyaartcenter.com/english/2026-exhibition-program) |
 
----
-
-## Funding Landscape
-
-*Researched 20 October 2026, after the move to Dalian. Amounts and eligibility checked against each fund's own pages unless marked "expected".*
-
-### Best Current Opportunities
-
-<div class="featured-grant" markdown="1">
-**Pollock-Krasner Foundation Grant — up to $50,000** (most around $35,000). Worldwide, no age limit, rolling; decision in 9–12 months.
-</div>
-
-<div class="featured-grant" markdown="1">
-**Mondriaan Artist Basic — €50,000** over 2–4 years. Rolling — but only while still embedded in Dutch art practice; ask the fund before applying.
-</div>
-
-### What the Move to Dalian Changes
-
-- **Mondriaan Fund:** no scheme sets a residence rule, but every one requires being *"ingebed in de professionele beeldende kunst in Nederland"* (embedded in Dutch professional practice). For Artist Basic this is re-tested at **each instalment payment** ([Deelregeling Kunstenaar Basis, art. 5(4)](https://wetten.overheid.nl/BWBR0044554/)), so a permanent move can put an awarded grant at risk. Non-Dutch nationals must attach a Dutch population-register (BRP) extract under one year old.
-- **Question to put to the fund:** *"If a recipient relocates to China for X months while keeping Dutch exhibitions, gallery and network, are they still ingebed under art. 6(1) of the Algemeen Reglement and art. 5(4) of the Artist Basic scheme?"*
-- **BRP registration:** Dutch rules require deregistration after more than 8 months a year abroad; deregistering very likely ends access to Dutch funds.
-- **Stroom Den Haag:** PRO Research requires living in The Hague. PRO Art Projects also accepts outside applicants whose project contributes to the Hague arts climate.
-- **Royal Painting Prize:** the 2027 edition closed 31 August 2026; foreign nationals must live in the Netherlands, and the age limit rules out 2028 onward.
-- **China:** national calls (NAMOC, China National Arts Fund, Huayu Youth Award) are for PRC citizens. Privately run residencies are open.
-- **Selling work in China** on a non-work visa: no source says whether sales or stipends count as employment (就业). Ask the Dalian exit-entry bureau or a PRC lawyer first.
-
-### International Grants (no residence requirement)
-
-**Pollock-Krasner Foundation** — [pkf.org/apply](https://pkf.org/apply/)
-- Up to $50,000 for one year, unrestricted use; painters eligible, any age
-- Requires at least 10 exhibitions in the past 10 years at professional galleries, museums or recognised spaces
-- Citizens or residents of US-sanctioned countries must contact the foundation before applying — email first to confirm Russian nationality is not affected
-
-### Netherlands — Mondriaan Fund
-
-- [mondriaanfonds.nl — grants overview](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/)
-- Budget: ~€46 million annual state funding; €50.3 million in grants awarded in 2025
-- All individual schemes are rolling unless noted; no retroactive funding
-
-| Grant | Amount | Duration | For |
-|-------|--------|----------|-----|
-| [Artist Basic](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/artist-basic/) | €50,000 | 2-4 years | Oeuvre development; ≥4 years practice; income ≤ €55,000/year |
-| [Artist Project](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/artist-project/) | €2,785/month (max €16,710), or budget-based up to 12 months | Up to 6 / 12 months | Working period — a work stay abroad is fundable |
-| [International Art Presentation](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/international-art-presentation/) | Travel, transport, lodging up to €1,000, 50% of new production | — | Show at a recognised foreign institution — e.g. a Chinese museum (not a commercial gallery) |
-| [Voucher International](https://www.mondriaanfonds.nl/en/application/voucher-international/) | Up to €2,500 | — | Travel for an invited talk or panel abroad (not exhibitions); apply 4 months to 5 weeks ahead |
-| [Residency grant](https://mondriaanfonds.nl/en/apply-for-a-grant/grants/residency) | Varies by residency | — | Partner residencies include Inside-Out (Beijing) and A4 (Chengdu); 2027 round closed, next expected ~August 2027 |
-| [Artist Start](https://www.mondriaanfonds.nl/en/apply-for-a-grant/grants/artist-start/) | €24,900 | 12 months | 1–4 years of practice only — *no longer eligible* |
-
-### Netherlands — Stroom Den Haag
-
-- [stroom.nl — financial support](https://www.stroom.nl/stroom-voor-kunstenaars/financiele-ondersteuning)
-- Online portal; requires a profile in Stroom's Hague artists register
-- Max €20,000 per applicant per calendar year; max 2 PRO applications per year
-- Moving during a funded project must be reported; Stroom then reassesses the grant
-
-| Grant | Max Amount | Notes |
-|-------|------------|-------|
-| [PRO Art Projects](https://stroom.nl/en/stroom-for-artists/financial-support/pro-art-projects) | €10,000 | ≥30% co-financing above €5,000; open to outside applicants with a Hague-facing project |
-| PRO Research | €5,000 | Must live in The Hague |
-| PRO Invest | €4,000 | Within 5 years of graduating — *no longer eligible* |
-| SPOT / OBJECT | — | Closed for 2026 |
-
-### Netherlands — Other
-
-| Fund | Amount | Notes |
-|------|--------|-------|
-| [Dutch Embassy Beijing](https://www.netherlandsandyou.nl/web/china-en/financial-support-for-cultural-exchange) | €1,500–10,000 | Organisations only — a Dutch or Chinese institution applies for an NL–China project; letter of intent to PEK-CCO@minbuza.nl |
-| [Stokroos](https://www.stokroos.nl/) | €25,000 or €40,000 | Makersinitiatieven; 2027 window not yet published; residence rule unconfirmed |
-| [Amarte](https://dutchculture.nl/en/grant/amarte-fund-visual-arts-development-grant) | Up to €2,750 | Development grant; must be based in the Netherlands |
-| Mondriaan Interdisciplinary Individual | €24,900 | New 2026 scheme (Staatscourant 2026-23198), 12 months; 2026 window closed, 2027 not published |
-
-### Residencies with Stipends
-
-| Residency | Support | Eligibility | Next Deadline |
-|-----------|---------|-------------|---------------|
-| [Art Explora × Cité internationale des arts](https://www.on-the-move.org/news/art-exploracite-internationale-des-arts-residency-programme-2027-france), Paris | €1,000/month (3 or 6 months), €3,000 production, return trip | Worldwide; ~5 years practice | **30 October 2026** |
-| [Jan van Eyck Academie](https://www.e-flux.com/announcements/6788336/call-for-applications-2028), Maastricht | ~€1,500/month for 2028, €2,000 work budget, minus programme fee | Must live in Maastricht during residency | **1 December 2026** |
-| [A4 Art Center](https://on-the-move.org/news/a4-residency-art-center-international-residency-2027-china), Chengdu | Studio, housing, travel, ¥10,000 production | International artists | **31 December 2026** |
-| [Rijksakademie](https://www.rijksakademie.nl/en/residency-apply/apply), Amsterdam | ~€19,800/year stipend + work budget, 1–2 years | All nationalities; half the places for those who lived and worked ≥2 years in NL | Call opens 1 January 2027 |
-| [Fukuoka Asian Art Museum AIR](https://faam.city.fukuoka.lg.jp/en/residence/requirement/), Japan | Travel, housing, per diem, production budget | No nationality or residence restriction | Expected window late December – late January |
-| [ZARYA](https://zaryavladivostok.ru/en/page/become-a-resident), Vladivostok | Grant from ₽50,000, travel, production, studio and housing | No visa needed for Russian nationals | Expected ~January 2027 |
-| [ARKO Art Studio](https://www.arko.or.kr/artcenter/board/view/503?cid=716979), Seoul | Living + production allowance, airfare, housing (4 months) | All nationalities, ≥5 years practice; confirm non-residents of Korea qualify | Expected ~February 2027 |
-| [Aranya Winter Residency](https://www.aranyaartcenter.com/english/program-aranya-winter-residency-open-call-2025-2026), Hebei | Housing, studio, up to $1,000 production | ≥3 years practice; outdoor large-scale work | Expected ~December 2026 |
-| [ICCI Art Valley](https://icci.sjtu.edu.cn/event/view/294), Shanghai Jiao Tong University | Flight, housing, ≥¥8,000, exhibition | Painting and mixed media prioritised | Expected ~July 2027 |
-| [Swatch Art Peace Hotel](https://www.swatch-art-peace-hotel.com/apply), Shanghai | Flight, apartment, studio (per listings; site unreachable when checked) | Open | Rolling |
-
-### Awards
-
-**Koninklijke Prijs voor Vrije Schilderkunst** — 3 × €9,000 — [paleisamsterdam.nl](https://www.paleisamsterdam.nl/en/exhibition-royal-award/)
-- No longer reachable: 2027 closed 31 August 2026; foreign nationals must live in the Netherlands; under-35 limit rules out 2028 onward
-
-**Not open to application:**
-- [Prix de Rome](https://www.mondriaanfonds.nl/en/activities/prix-de-rome/) — €60,000 (2025); candidates scouted by the jury
-- [Cultuurfonds Talentprijs Charlotte Köhler](https://www.cultuurfonds.nl/cultuurfonds-talentprijs-charlotte-k%C3%B6hler) — €20,000; under 35, jury-selected
-- Huayu Youth Award, K11 Artist Prize — limited to Chinese / Asian artists
 
 ---
 
@@ -325,38 +399,6 @@ Typical requirements:
 - [ ] Note expected response date
 - [ ] Calendar reminder for result
 - [ ] If rejected: request feedback (if offered)
-
----
-
-## Key Dates & Deadlines
-
-### Upcoming
-
-| Date | Opportunity |
-|------|-------------|
-| 30 Oct 2026 | Art Explora × Cité internationale des arts, Paris |
-| 1 Dec 2026 | Jan van Eyck Academie 2028 |
-| 31 Dec 2026 | A4 Art Center, Chengdu |
-| 1 Jan 2027 | Rijksakademie 2028 call opens |
-| Late Dec – Jan (expected) | Fukuoka Asian Art Museum AIR |
-| ~Jan 2027 (expected) | ZARYA, Vladivostok |
-| ~Feb 2027 (expected) | ARKO Art Studio, Seoul |
-| Mid-Sep (annual) | Dalian Youth Fine Art Exhibition — eligible after one year in Dalian |
-
-### Rolling
-
-| Fund | Notes |
-|------|-------|
-| Pollock-Krasner Foundation | Decision in 9–12 months |
-| Mondriaan Artist Basic / Artist Project / International Art Presentation | ~3 months processing; embedding in Dutch practice required |
-| Swatch Art Peace Hotel | 3–6 month stays |
-
-### Residency Cycles
-
-| Residency | Application Period |
-|-----------|-------------------|
-| Pilotenkueche | Rolling, quarterly |
-| Togatta TR-044 | Permanent open call |
 
 ---
 

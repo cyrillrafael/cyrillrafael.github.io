@@ -1,7 +1,7 @@
 // Resources page: linkable subheadings and copy-on-click template insets.
 
-// Each h2/h3 already carries a kramdown auto-id; add a visible "#" link to it.
-document.querySelectorAll('.content h2[id], .content h3[id]').forEach(function (h) {
+// Each h2–h4 already carries a kramdown auto-id; add a visible "#" link to it.
+document.querySelectorAll('.content h2[id], .content h3[id], .content h4[id]').forEach(function (h) {
   var a = document.createElement('a');
   a.className = 'heading-anchor';
   a.href = '#' + h.id;
@@ -9,6 +9,32 @@ document.querySelectorAll('.content h2[id], .content h3[id]').forEach(function (
   a.setAttribute('aria-label', 'Link to this section');
   h.appendChild(a);
 });
+
+// Timeline rows: compare each row's first <time datetime> with today, so the page
+// never presents a passed deadline as open. Dates are calendar days in local time.
+(function () {
+  var DAY = 86400000;
+  var now = new Date();
+  var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  document.querySelectorAll('.timeline + table tbody tr, table.timeline tbody tr').forEach(function (row) {
+    var time = row.querySelector('time[datetime]');
+    if (!time) return;
+    var parts = time.getAttribute('datetime').split('-').map(Number);
+    var days = Math.round((Date.UTC(parts[0], parts[1] - 1, parts[2]) - today) / DAY);
+    var label = document.createElement('span');
+    label.className = 'deadline-label';
+    if (days < 0) {
+      row.classList.add('is-past');
+      label.textContent = 'closed';
+    } else if (days <= 30) {
+      row.classList.add('is-soon');
+      label.textContent = days === 0 ? 'today' : days + (days === 1 ? ' day left' : ' days left');
+    } else {
+      return;
+    }
+    time.parentNode.appendChild(label);
+  });
+})();
 
 // Each .copy-inset gets a corner button that copies the inset's text.
 document.querySelectorAll('.copy-inset').forEach(function (inset) {
