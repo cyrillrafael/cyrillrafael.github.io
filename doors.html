@@ -1,0 +1,556 @@
+---
+layout: null
+permalink: /doors/
+sitemap: false
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>side a / side b</title>
+<style>
+  :root { --wall: #eeece8; --ink: #1d1b18; --ink-soft: #5d5850; }
+  html, body { margin: 0; min-height: 100vh; }
+  body {
+    background: linear-gradient(to bottom, #f6f5f2, #e9e7e3) fixed var(--wall);
+    color: var(--ink);
+    font-family: 'Menlo', 'Courier New', monospace;
+    font-size: 0.8rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1.2em; padding: 2em 1em; box-sizing: border-box;
+  }
+  canvas { display: block; image-rendering: pixelated; }
+  #tape { cursor: pointer; outline: none; }
+  #tape:focus-visible { outline: 1px dashed var(--ink-soft); outline-offset: 4px; }
+  .info { text-align: center; line-height: 1.6; max-width: 34em; }
+  .info .side { font-weight: bold; }
+  .info .rec, .info .hint { color: var(--ink-soft); }
+  .info a { color: inherit; }
+  .error { color: #8a2a12; }
+  button {
+    font: inherit; color: var(--ink); background: none; cursor: pointer;
+    border: 1px solid var(--ink-soft); border-radius: 2px; padding: 0.3em 1em;
+  }
+</style>
+</head>
+<body>
+<canvas id="tape" tabindex="0" role="button" aria-label="cassette tape: play or pause"></canvas>
+<canvas id="meter" aria-hidden="true"></canvas>
+<div class="info">
+  <div class="side" id="side-title"></div>
+  <div class="rec" id="side-rec"></div>
+  <div class="error" id="side-error" role="alert"></div>
+  <div class="hint">click the tape (or space) to play · <button id="flip">flip</button> (f)</div>
+</div>
+
+<script>
+// Each side is a tape-length playlist streamed straight from archive.org;
+// nothing is hosted here. Tracks play in order and the side loops.
+// `len` (seconds, from the item metadata) lets the reels and counter follow
+// the whole side; `start` cues the first play only.
+//
+// "Riders on the Storm" survives live only as an incomplete audience
+// fragment (Dallas, 1970-12-11) that is not on archive.org, so side A opens
+// with the studio take and rolls into a full 1970 show. Side B is the whole
+// Hollywood Bowl 1968 concert, cued to "Spanish Caravan" (33:30).
+const AR = "https://archive.org/download/";
+const FF = AR + "the-doors-liveinnewyork-flac/";
+const FF_LEN = [267, 261, 389, 264, 123, 195, 147, 111, 148, 32, 307, 85, 354, 384, 198, 95, 525, 119, 394, 62];
+const SIDES = [
+  { label: "A", title: "RIDERS ON THE STORM", line2: "THE DOORS", tag: "FELT FORUM 70", stripe: "#b5532e", seed: 7,
+    rec: "studio take (l.a. woman, 1971), then live at the felt forum, new york, 17 jan 1970, first show",
+    links: [["the-doors-l.-a.-woman-10-riders-on-the-storm", "studio"], ["the-doors-liveinnewyork-flac", "felt forum"]],
+    tracks: [
+      { u: AR + "the-doors-l.-a.-woman-10-riders-on-the-storm/The%20Doors%20-%20L.A.%20Woman%20-%2010%20-%20Riders%20on%20the%20Storm.mp3", len: 433 },
+      ...[
+        "01%20Start%20of%20Show%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "02%20Roadhouse%20Blues%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "03%20Ship%20of%20Fools%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "04%20Break%20on%20Through%20%28To%20the%20Other%20Side%29%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "05%20Tuning%20%282%29%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "06%20Peace%20Frog%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "07%20Blue%20Sunday%20%20%28Live%20at%20Felt%20Forum%2C%20New%20York%20CIty%2C%20January%2017%2C%201970%20-%20First%20Show%29.mp3",
+        "08%20Alabama%20Song%20%28Whisky%20Bar%29%20%20%28Live%20at%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%20-%20First%20Show%29.mp3",
+        "09%20Back%20Door%20Man%20%20%28Live%20at%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%20-%20First%20Show%29.mp3",
+        "10%20Love%20Hides%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "11%20Five%20to%20One%20%20%28Live%20at%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "12%20Tuning%20_%20Breather%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "13%20Who%20Do%20You%20Love%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "14%20Little%20Red%20Rooster%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "15%20Money%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "16%20Tuning%20%283%29%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "17%20Light%20My%20Fire%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "18%20More%2C%20More%2C%20More%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "19%20Soul%20Kitchen%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+        "20%20End%20of%20Show%20%20%28Live%20at%20the%20Felt%20Forum%2C%20New%20York%20City%2C%20January%2017%2C%201970%2C%20First%20Show%29.mp3",
+      ].map((f, i) => ({ u: FF + f, len: FF_LEN[i] })),
+    ] },
+  { label: "B", title: "SPANISH CARAVAN", line2: "THE DOORS", tag: "HOLLYWOOD BOWL 68", stripe: "#3d6e6a", seed: 23,
+    rec: "live at the hollywood bowl, 5 july 1968 — the whole show, cued to spanish caravan",
+    links: [["the-doors-live-at-the-hollywood-bowl-5-july-1968", "hollywood bowl"]],
+    tracks: [
+      { u: AR + "the-doors-live-at-the-hollywood-bowl-5-july-1968/The%20Doors%20%E2%98%86%20Live%20At%20The%20Hollywood%20Bowl%20%E2%98%86%205%20July%201968.mp4",
+        len: 4208, start: 2010 },
+    ] },
+];
+SIDES.forEach(s => (s.total = s.tracks.reduce((a, t) => a + t.len, 0)));
+
+// ---------- geometry (cassette pixels; a compact cassette is 100.4 x 63.8 mm) ----------
+const W = 160, H = 102;                // cassette
+const CW = W + 8, CH = H + 8;          // canvas, with room for lift + pixel shadow
+const WIN = { x: 44, y: 38, w: 72, h: 23 };
+const HUB_L = { x: 62, y: 49 }, HUB_R = { x: 98, y: 49 };
+const ROLL_L = { x: 20, y: 96 }, ROLL_R = { x: 140, y: 96 };
+const R_HUB = 5, R_CORE = 6, R_FULL = 17;
+const PACK_AREA = R_FULL * R_FULL - R_CORE * R_CORE;   // tape is conserved: rL^2 + rR^2 = const
+const OPENINGS = [[16, 24], [46, 56], [72, 88], [104, 114], [136, 144]];  // x-ranges at the bottom edge
+const TAPE_Y = 98;
+const V = 16;                           // tape speed, cassette px per second
+
+// ---------- pixel font: 3x5 ----------
+const GLYPHS = {
+  A:"010101111101101", B:"110101110101110", C:"011100100100011", D:"110101101101110",
+  E:"111100110100111", F:"111100110100100", G:"011100101101011", H:"101101111101101",
+  I:"111010010010111", K:"101101110101101", L:"100100100100111", M:"101111111101101",
+  N:"110101101101101", O:"010101101101010", P:"110101110100100", R:"110101110101101",
+  S:"011100010001110", T:"111010010010010", U:"101101101101111", V:"101101101101010",
+  W:"101101111111101", Y:"101101010010010",
+  0:"111101101101111", 1:"010110010010111", 2:"110001010100111", 3:"110001010001110",
+  4:"101101111001001", 5:"111100110001110", 6:"011100110101010", 7:"111001010010010",
+  8:"010101010101010", 9:"010101011001110",
+  ".":"000000000000010", "-":"000000111000000", "/":"001001010100100",
+};
+
+const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+let g;                                  // current drawing context for the helpers below
+const px = (x, y, c) => { g.fillStyle = c; g.fillRect(x | 0, y | 0, 1, 1); };
+const rect = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+const textW = s => s.length * 4 - 1;
+function text(s, x, y, c) {
+  for (const ch of s.toUpperCase()) {
+    const gl = GLYPHS[ch];
+    if (gl) for (let i = 0; i < 15; i++) if (gl[i] === "1") px(x + i % 3, y + (i / 3 | 0), c);
+    x += 4;
+  }
+}
+function disc(cx, cy, r, c) {
+  for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++)
+    if (x * x + y * y <= r * r + r * 0.6) px(cx + x, cy + y, c);
+}
+function line(x0, y0, x1, y1, c) {      // Bresenham
+  x0 |= 0; y0 |= 0; x1 |= 0; y1 |= 0;
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let e = dx + dy;
+  for (;;) {
+    px(x0, y0, c);
+    if (x0 === x1 && y0 === y1) return;
+    const e2 = 2 * e;
+    if (e2 >= dy) { e += dy; x0 += sx; }
+    if (e2 <= dx) { e += dx; y0 += sy; }
+  }
+}
+function rng(seed) {                    // mulberry32: stable wear per sticker
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ---------- static layer: shell + sticker, built once per side ----------
+function buildBase(s) {
+  const c = mk(W, H); g = c.getContext("2d");
+  // shell, 2px chamfered corners
+  rect(2, 0, W - 4, H, "#2b2926"); rect(0, 2, W, H - 4, "#2b2926"); rect(1, 1, W - 2, H - 2, "#2b2926");
+  rect(2, 1, W - 4, 1, "#3d3a35"); rect(1, 2, 1, H - 4, "#353230");
+  rect(2, H - 2, W - 4, 1, "#1c1a18"); rect(W - 2, 2, 1, H - 4, "#211f1c");
+  // write-protect notches on the top edge
+  for (const x of [22, 132]) { rect(x, 0, 6, 2, "#141312"); rect(x, 2, 6, 1, "#1c1a18"); }
+  // five screws with slots
+  for (const [x, y] of [[4, 4], [W - 7, 4], [4, H - 7], [W - 7, H - 7], [W / 2 - 1, 66]]) {
+    rect(x, y, 3, 3, "#8a857c"); px(x, y, "#b3ada2"); px(x + 1, y + 1, "#4a4640"); px(x + 2, y + 2, "#5d5850");
+  }
+  drawSticker(s);
+  // window recess + clear rim
+  rect(WIN.x - 1, WIN.y - 1, WIN.w + 2, WIN.h + 2, "#34312d");
+  rect(WIN.x, WIN.y, WIN.w, WIN.h, "#141312");
+  // lower trapezoid (tape-head area)
+  for (let y = 70; y < H - 1; y++) {
+    const inset = Math.max(0, 30 - ((y - 70) >> 2) * 1);
+    rect(inset, y, W - 2 * inset, 1, y === 70 ? "#36332f" : "#24221f");
+  }
+  // bottom openings, capstan holes, locating holes
+  for (const [a, b] of OPENINGS) rect(a, 94, b - a + 1, H - 95, "#0c0b0a");
+  for (const x of [38, 122]) { disc(x, 88, 2, "#0c0b0a"); px(x - 1, 86, "#3a3733"); }
+  for (const x of [62, 98]) { rect(x - 1, 85, 3, 3, "#0c0b0a"); }
+  // raised ribs along the trapezoid
+  for (let x = 34; x < W - 34; x += 6) px(x, 74, "#36332f");
+  return c;
+}
+
+function drawSticker(s) {
+  const r = rng(s.seed);
+  const x0 = 9, y0 = 7, w = W - 18, h = 59;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const edge = Math.min(x, y, w - 1 - x, h - 1 - y), p = r();
+    if (edge < 2 && p < 0.24 - edge * 0.09) continue;       // frayed edge
+    px(x0 + x, y0 + y, p > 0.987 ? "#d1c19b" : p > 0.972 ? "#f1e9d5" : "#e6dabd");
+  }
+  for (let i = 0; i < 8; i++) rect(x0 + w - 8 + i, y0, 8 - i, 1, "#2b2926");   // torn-off corner
+  // ruled lines, broken where rubbed
+  for (const y of [y0 + 19, y0 + 22]) for (let x = 5; x < w - 5; x++) if (r() > 0.12) px(x0 + x, y, "#d8cba9");
+  // mug ring and two scratches
+  const cx = x0 + 14 + (r() * 6 | 0), cy = y0 + 44;
+  for (let a = 0; a < 48; a++) {
+    const t = a / 48 * Math.PI * 1.5 + 0.4;
+    if (r() < 0.7) px(cx + Math.round(Math.cos(t) * 10), cy + Math.round(Math.sin(t) * 7), "#d6c49e");
+  }
+  line(x0 + 96, y0 + 4, x0 + 118, y0 + 14, "#efe6cf");
+  line(x0 + 20, y0 + 52, x0 + 31, y0 + 48, "#d9cba8");
+  // stripe, scuffed
+  for (let x = 0; x < w; x++) if (r() > 0.07) rect(x0 + x, y0 + 25, 1, 4, s.stripe);
+  // side box + text
+  rect(x0 + 4, y0 + 4, 9, 11, s.stripe); text(s.label, x0 + 7, y0 + 7, "#e6dabd");
+  text(s.title, x0 + 17, y0 + 5, "#2a241c");
+  text(s.line2, x0 + 17, y0 + 12, "#6a5f4e");
+  if (s.tag) text(s.tag, x0 + w - 6 - textW(s.tag), y0 + 12, "#6a5f4e");
+  text("C90", x0 + 6, y0 + 50, "#7a6e5a");
+  text("TYPE I", x0 + w - 6 - textW("TYPE I"), y0 + 50, "#7a6e5a");
+  // faded arrow pointing in the tape direction
+  for (let i = 0; i < 9; i++) px(x0 + 8 + i, y0 + 41, "#b9aa86");
+  px(x0 + 15, y0 + 40, "#b9aa86"); px(x0 + 15, y0 + 42, "#b9aa86");
+}
+
+// ---------- dynamic layer ----------
+const st = {
+  side: 0, playing: false, speed: 0, angL: 0, angR: 0, angRoll: 0, tapePos: 0,
+  hover: false, pressed: false, flipT: -1, glintT: -1,
+  levels: [0, 0], peaks: [0, 0],
+};
+const bases = SIDES.map(buildBase);
+const frame = mk(W, H);
+
+// seconds into the whole side (tracks before the current one + position in it)
+function sidePos(i) {
+  const s = SIDES[i];
+  let t = 0; for (let k = 0; k < qi[i]; k++) t += s.tracks[k].len;
+  return t + (audio[i] ? audio[i].currentTime : 0);
+}
+function progress(i) { return Math.min(1, sidePos(i) / SIDES[i].total); }
+function packRadii(p) {
+  return [Math.sqrt(R_CORE * R_CORE + PACK_AREA * (1 - p)), Math.sqrt(R_CORE * R_CORE + PACK_AREA * p)];
+}
+
+function drawPack(c, r, ang) {
+  const R = Math.ceil(r);
+  for (let y = -R; y <= R; y++) for (let x = -R; x <= R; x++) {
+    const d = Math.sqrt(x * x + y * y);
+    if (d > r) continue;
+    px(c.x + x, c.y + y, d > r - 1 ? "#5e4433" : (d * 1.4 | 0) % 3 === 0 ? "#42301f" : "#4a3426");
+  }
+  for (let k = 0; k < 4; k++) {           // specks wound into the pack show its rotation
+    const rr = R_CORE + 1 + (k * 2.7 + 1) % Math.max(1, r - R_CORE - 1), t = ang + k * 1.9;
+    if (rr < r - 1) px(c.x + Math.round(Math.cos(t) * rr), c.y + Math.round(Math.sin(t) * rr), "#6b4e3a");
+  }
+}
+function drawHub(c, ang) {
+  disc(c.x, c.y, R_HUB, "#d9d3c7");
+  px(c.x - 2, c.y - 4, "#f2eee6"); px(c.x - 3, c.y - 3, "#f2eee6");
+  disc(c.x, c.y, 3, "#141312");
+  for (let k = 0; k < 6; k++) {           // six drive teeth
+    const t = ang + k * Math.PI / 3;
+    px(c.x + Math.round(Math.cos(t) * 2.6), c.y + Math.round(Math.sin(t) * 2.6), "#d9d3c7");
+  }
+}
+// outer tangent point on circle (c, r) as seen from external point p
+function tangent(c, r, p, pickMinX) {
+  const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy);
+  const a = Math.atan2(dy, dx), b = Math.acos(Math.min(1, r / d));
+  const t1 = { x: c.x + r * Math.cos(a + b), y: c.y + r * Math.sin(a + b) };
+  const t2 = { x: c.x + r * Math.cos(a - b), y: c.y + r * Math.sin(a - b) };
+  return (t1.x < t2.x) === pickMinX ? t1 : t2;
+}
+
+function drawCassette(t) {
+  g = frame.getContext("2d");
+  g.clearRect(0, 0, W, H);
+  g.drawImage(bases[st.side], 0, 0);
+  const [rL, rR] = packRadii(progress(st.side));
+
+  // through the window: packs, hubs, tape leaving toward the guide rollers
+  g.save(); g.beginPath(); g.rect(WIN.x, WIN.y, WIN.w, WIN.h); g.clip();
+  drawPack(HUB_L, rL, st.angL); drawPack(HUB_R, rR, st.angR);
+  const tl = tangent(HUB_L, rL, ROLL_L, true), tr = tangent(HUB_R, rR, ROLL_R, false);
+  line(tl.x, tl.y, ROLL_L.x, ROLL_L.y, "#3b2a1e");
+  line(tr.x, tr.y, ROLL_R.x, ROLL_R.y, "#3b2a1e");
+  drawHub(HUB_L, st.angL); drawHub(HUB_R, st.angR);
+  // window scale ticks
+  for (let x = WIN.x + 4, i = 0; x < WIN.x + WIN.w - 3; x += 4, i++) rect(x, WIN.y + 1, 1, i % 5 ? 1 : 2, "#77716a");
+  // glint sweeping across the glass
+  if (st.glintT >= 0) {
+    const gx = WIN.x - 12 + (t - st.glintT) / 600 * (WIN.w + 24);
+    for (let y = 0; y < WIN.h; y++) for (let k = 0; k < 3; k++) px(gx + k - y * 0.5, WIN.y + y, "rgba(255,255,255,0.13)");
+  }
+  g.restore();
+
+  // tape across the bottom openings: streaks move with the tape
+  for (const [a, b] of OPENINGS) for (let x = a; x <= b; x++) {
+    const streak = ((x + (st.tapePos | 0)) % 7 + 7) % 7 === 0;
+    px(x, TAPE_Y, streak ? "#6b4e3a" : "#4a3426");
+  }
+  // guide rollers (visible in the corner openings), turning
+  for (const R of [ROLL_L, ROLL_R]) {
+    disc(R.x, R.y, 2, "#bdb6a9");
+    px(R.x + Math.round(Math.cos(st.angRoll) * 1.4), R.y + Math.round(Math.sin(st.angRoll) * 1.4), "#6d675e");
+  }
+  // pressure pad: felt on a leaf spring, shivering while the tape runs
+  const jit = st.speed > 0.3 && (t / 45 | 0) % 2 ? 1 : 0;
+  rect(76 + jit, 99, 9, 2, "#c8b98a"); rect(74, 101, 13, 1, "#8a857c");
+
+  // the torn corner's last flap of paper lifts in the draft
+  const lift = (st.hover || st.playing) && (t / 170 | 0) % 2;
+  const fx = W - 17, fy = 7;
+  for (let i = 0; i < 6; i++) px(fx + i + lift, fy + 6 - i - lift, i < 2 ? "#cbbd98" : "#ddd0ae");
+  if (lift) px(fx + 6, fy, "#f1e9d5");
+}
+
+// ---------- compositing: lift, press, pixel shadow, stepped flip ----------
+const cv = document.getElementById("tape"), out = cv.getContext("2d");
+cv.width = CW; cv.height = CH;
+const FLIP_STEPS = [1, 0.72, 0.42, 0.14, 0.14, 0.42, 0.72, 1];
+function compose(t) {
+  drawCassette(t);
+  out.imageSmoothingEnabled = false;
+  out.clearRect(0, 0, CW, CH);
+  let w = W;
+  if (st.flipT >= 0) {
+    const i = Math.min(FLIP_STEPS.length - 1, (t - st.flipT) / 55 | 0);
+    w = Math.max(2, Math.round(W * FLIP_STEPS[i]));
+  }
+  const lift = st.pressed ? 0 : st.hover ? 2 : 1;
+  const x = 4 + ((W - w) >> 1), y = 4 - lift + 1;
+  out.fillStyle = "rgba(60, 45, 25, 0.22)";
+  out.fillRect(x + lift + 1, y + lift + 2, w, H);
+  out.drawImage(frame, 0, 0, W, H, x, y, w, H);
+}
+
+// ---------- meter: tape counter + stereo LED bars ----------
+const mv = document.getElementById("meter"), mg = mv.getContext("2d");
+const MW = 66, MH = 11;
+mv.width = MW; mv.height = MH;
+function drawMeter() {
+  g = mg;
+  rect(1, 0, MW - 2, MH, "#2b2926"); rect(0, 1, MW, MH - 2, "#2b2926");
+  rect(2, 2, 15, 7, "#141312");
+  const n = Math.floor(sidePos(st.side) / 3) % 1000;   // ~3 s per count, like a deck's tape counter
+  text(String(n).padStart(3, "0"), 4, 3, "#e6dabd");
+  for (let ch = 0; ch < 2; ch++) {
+    const lit = Math.round(st.levels[ch] * 15), pk = Math.round(st.peaks[ch] * 15);
+    for (let i = 0; i < 15; i++) {
+      const on = i < lit || (i === pk - 1 && pk > 0);
+      const col = i < 10 ? ["#7a9a4a", "#34402a"] : i < 13 ? ["#d0a040", "#4a3f26"] : ["#c8503a", "#4a2a24"];
+      rect(20 + i * 3, 2 + ch * 4, 2, 3, on ? col[0] : col[1]);
+    }
+  }
+}
+function fit() {
+  const k = Math.max(1, Math.min(Math.floor(Math.min(innerWidth * 0.94, 760) / CW), Math.floor(innerHeight * 0.62 / CH)));
+  cv.style.width = CW * k + "px"; cv.style.height = CH * k + "px";
+  const km = Math.max(1, Math.floor(k * 0.75));
+  mv.style.width = MW * km + "px"; mv.style.height = MH * km + "px";
+}
+
+// ---------- audio ----------
+const audio = SIDES.map(() => { const a = new Audio(); a.preload = "none"; a.preservesPitch = false; return a; });
+const qi = SIDES.map(() => 0);
+const wired = SIDES.map(() => null);
+const routable = SIDES.map(() => null);   // null = unchecked; true/false after the CORS probe
+const errRun = SIDES.map(() => 0);
+let ac, hiss, buf;
+
+function load(i, k, cue) {
+  const tr = SIDES[i].tracks[k];
+  qi[i] = k; audio[i].src = tr.u;
+  if (cue && tr.start) audio[i].addEventListener("loadedmetadata", () => (audio[i].currentTime = tr.start), { once: true });
+}
+function advance(i) {
+  load(i, (qi[i] + 1) % SIDES[i].tracks.length, false);
+  if (st.playing && st.side === i) audio[i].play().catch(e => fail(e.message));
+}
+audio.forEach((a, i) => {
+  a.addEventListener("ended", () => advance(i));
+  a.addEventListener("playing", () => (errRun[i] = 0));
+  a.addEventListener("error", () => {
+    if (!a.getAttribute("src")) return;
+    // skip a dead track; give up loudly only when several in a row fail
+    if (++errRun[i] < Math.min(3, SIDES[i].tracks.length)) return advance(i);
+    fail(`side ${SIDES[i].label}: ${errRun[i]} tracks in a row would not play (media error ${a.error ? a.error.code : "?"})`);
+  });
+});
+
+// Routing an element through Web Audio needs CORS on *every* track it will
+// play; a non-CORS track routed this way plays as silence with no error. So
+// probe each distinct host item first and route only if all of them pass.
+async function probeCors(i) {
+  if (routable[i] !== null) return routable[i];
+  const items = [...new Set(SIDES[i].tracks.map(t => t.u.split("/").slice(0, 5).join("/")))];
+  const firstOf = it => SIDES[i].tracks.find(t => t.u.startsWith(it)).u;
+  try {
+    await Promise.all(items.map(it => fetch(firstOf(it), { headers: { Range: "bytes=0-1" }, mode: "cors" })
+      .then(r => { if (!r.ok) throw new Error(r.status); })));
+    routable[i] = true;
+  } catch { routable[i] = false; }
+  return routable[i];
+}
+
+function audioGraph(i) {
+  if (!ac) {
+    ac = new AudioContext();
+    // hiss: band-limited noise with sparse crackle, synthesized here
+    const len = ac.sampleRate * 3; buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0); let lp = 0;
+    for (let n = 0; n < len; n++) {
+      lp = lp * 0.82 + (Math.random() * 2 - 1) * 0.18;
+      d[n] = lp + (Math.random() < 0.0004 ? (Math.random() * 2 - 1) * 0.9 : 0);
+    }
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900;
+    hiss = ac.createGain(); hiss.gain.value = 0;
+    src.connect(hp).connect(hiss).connect(ac.destination); src.start();
+  }
+  if (!wired[i] && routable[i]) {
+    // tape colouring: gentle top-end roll-off and soft saturation; analysers feed the meter
+    const src = ac.createMediaElementSource(audio[i]);
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 9500;
+    const sat = ac.createWaveShaper(), curve = new Float32Array(1024);
+    for (let n = 0; n < 1024; n++) { const x = n / 511.5 - 1; curve[n] = Math.tanh(1.4 * x) / Math.tanh(1.4); }
+    sat.curve = curve;
+    const split = ac.createChannelSplitter(2);
+    const an = [ac.createAnalyser(), ac.createAnalyser()];
+    an.forEach(a => (a.fftSize = 512));
+    src.connect(lp).connect(sat);
+    sat.connect(ac.destination); sat.connect(split);
+    split.connect(an[0], 0); split.connect(an[1], 1);
+    wired[i] = { an, data: new Float32Array(512), zeroSince: 0 };
+  }
+  ac.resume();
+}
+function readLevels(dt, t) {
+  const w = wired[st.side], a = audio[st.side];
+  for (let ch = 0; ch < 2; ch++) {
+    let lvl = 0;
+    if (w && st.playing) {
+      w.an[ch].getFloatTimeDomainData(w.data);
+      let s = 0; for (const v of w.data) s += v * v;
+      // watchdog: exact digital zero for 4 s while the clock runs means the
+      // browser is muting a cross-origin track -- say so instead of playing silence
+      if (ch === 0) {
+        if (s === 0 && !a.paused && a.currentTime > 1) {
+          if (!w.zeroSince) w.zeroSince = t;
+          else if (t - w.zeroSince > 4000) { pause(); fail(`side ${SIDES[st.side].label}: the stream is muted by the browser (no CORS on this track); reload to play it unrouted`); routable[st.side] = false; }
+        } else w.zeroSince = 0;
+      }
+      const db = 20 * Math.log10(Math.sqrt(s / w.data.length) + 1e-6);
+      lvl = Math.max(0, Math.min(1, (db + 42) / 40));
+    }
+    st.levels[ch] += (lvl - st.levels[ch]) * (lvl > st.levels[ch] ? 0.6 : 1 - Math.exp(-dt / 0.18));
+    st.peaks[ch] = Math.max(st.levels[ch], st.peaks[ch] - dt * 0.5);
+  }
+}
+
+// ---------- animation loop (runs only while something moves) ----------
+let raf = 0, last = 0;
+function moving(t) {
+  return st.playing || st.speed > 0.01 || st.hover || st.flipT >= 0 || st.glintT >= 0 ||
+    st.levels[0] + st.levels[1] + st.peaks[0] + st.peaks[1] > 0.01;
+}
+function tick(t) {
+  const dt = Math.min(0.1, (t - (last || t)) / 1000); last = t;
+  st.speed += ((st.playing ? 1 : 0) - st.speed) * (1 - Math.exp(-dt / 0.28));   // coast up / spin down
+  const [rL, rR] = packRadii(progress(st.side));
+  st.angL += st.speed * V / rL * dt;    // constant tape speed: the smaller pack spins faster
+  st.angR += st.speed * V / rR * dt;
+  st.angRoll += st.speed * V / 2 * dt;
+  st.tapePos -= st.speed * V * dt;
+  if (st.playing) audio[st.side].playbackRate = 1 + 0.002 * Math.sin(t / 900) + 0.001 * Math.sin(t / 61);  // wow + flutter
+  if (st.glintT >= 0 && t - st.glintT > 600) st.glintT = -1;
+  if (st.flipT >= 0) {
+    const i = (t - st.flipT) / 55 | 0;
+    if (i >= 4 && !st.flipSwapped) { st.flipSwapped = true; st.side = 1 - st.side; label(); }
+    if (i >= FLIP_STEPS.length) { st.flipT = -1; if (st.resumeAfterFlip) play(); }
+  }
+  readLevels(dt, t);
+  compose(t); drawMeter();
+  raf = moving(t) ? requestAnimationFrame(tick) : 0;
+  if (!raf) last = 0;
+}
+function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+
+// ---------- controls ----------
+async function play() {
+  const i = st.side, a = audio[i];
+  try {
+    if (!a.getAttribute("src")) {
+      // the AudioContext must start inside the click; the CORS probe can wait
+      if (!ac) audioGraph(-1);
+      if (await probeCors(i)) a.crossOrigin = "anonymous";
+      load(i, 0, true);
+    }
+    audioGraph(i);
+    hiss.gain.setTargetAtTime(0.05, ac.currentTime, 0.3);
+    await a.play();
+    st.playing = true; clearError(); kick();
+  } catch (e) { fail(e.message); }
+}
+function pause() {
+  audio[st.side].pause(); st.playing = false;
+  if (hiss) hiss.gain.setTargetAtTime(0, ac.currentTime, 0.15);
+  kick();
+}
+function toggle() { st.playing ? pause() : play(); }
+function flip() {
+  if (st.flipT >= 0) return;
+  st.resumeAfterFlip = st.playing;
+  if (st.playing) pause();
+  st.flipSwapped = false; st.flipT = performance.now(); kick();
+}
+function fail(msg) {
+  document.getElementById("side-error").textContent = msg;
+  st.playing = false; if (hiss) hiss.gain.setTargetAtTime(0, ac.currentTime, 0.15); kick();
+}
+function clearError() { document.getElementById("side-error").textContent = ""; }
+function label() {
+  const s = SIDES[st.side];
+  document.getElementById("side-title").textContent = `side ${s.label.toLowerCase()} · ${s.title.toLowerCase()}`;
+  const rec = document.getElementById("side-rec");
+  rec.textContent = s.rec + " · archive.org: ";
+  s.links.forEach(([item, name], k) => {
+    if (k) rec.append(", ");
+    const a = document.createElement("a");
+    a.href = `https://archive.org/details/${item}`; a.textContent = name;
+    rec.appendChild(a);
+  });
+  clearError();
+}
+
+cv.addEventListener("click", toggle);
+cv.addEventListener("pointerenter", () => { st.hover = true; kick(); });
+cv.addEventListener("pointerleave", () => { st.hover = false; st.pressed = false; kick(); });
+cv.addEventListener("pointerdown", () => { st.pressed = true; kick(); });
+addEventListener("pointerup", () => { st.pressed = false; kick(); });
+document.getElementById("flip").addEventListener("click", flip);
+addEventListener("keydown", e => {
+  if (e.target.tagName === "BUTTON") return;
+  if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
+  else if (e.key === "f" || e.key === "F") flip();
+});
+// an occasional glint across the window while the tape sits idle
+setInterval(() => { if (!document.hidden && !st.playing && st.flipT < 0) { st.glintT = performance.now(); kick(); } }, 9000);
+addEventListener("resize", fit);
+fit(); label(); compose(performance.now()); drawMeter();
+</script>
+</body>
+</html>
