@@ -4,6 +4,7 @@ permalink: /doors/
 sitemap: false
 ---
 <!DOCTYPE html>
+<!-- source: cyrillrafael/cyrillrafael.github.io, doors.html (unlisted; noindex; not in the sitemap) -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -11,39 +12,59 @@ sitemap: false
 <meta name="robots" content="noindex, nofollow">
 <title>side a / side b</title>
 <style>
-  :root { --wall: #eeece8; --ink: #1d1b18; --ink-soft: #5d5850; }
-  html, body { margin: 0; min-height: 100vh; }
+  :root { --wall: #eeece8; --ink: #1d1b18; --ink-soft: #5d5850; --night: #1a140e; }
+  html, body { margin: 0; }
   body {
     background: linear-gradient(to bottom, #f6f5f2, #e9e7e3) fixed var(--wall);
     color: var(--ink);
     font-family: 'Menlo', 'Courier New', monospace;
     font-size: 0.8rem;
+  }
+  section {
+    min-height: 100vh; min-height: 100svh; box-sizing: border-box;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 1.2em; padding: 2em 1em; box-sizing: border-box;
+    gap: 1.2em; padding: 2em 1em;
   }
   canvas { display: block; image-rendering: pixelated; }
-  #tape { cursor: pointer; outline: none; }
+  #tape { cursor: grab; outline: none; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #tape.grabbing { cursor: grabbing; }
   #tape:focus-visible { outline: 1px dashed var(--ink-soft); outline-offset: 4px; }
-  .info { text-align: center; line-height: 1.6; max-width: 34em; }
+  .info { text-align: center; line-height: 1.6; max-width: 36em; }
   .info .side { font-weight: bold; }
   .info .rec, .info .hint { color: var(--ink-soft); }
   .info a { color: inherit; }
+  .status { min-height: 1.6em; color: #8a5a12; }
   .error { color: #8a2a12; }
   button {
     font: inherit; color: var(--ink); background: none; cursor: pointer;
     border: 1px solid var(--ink-soft); border-radius: 2px; padding: 0.3em 1em;
   }
+  .down { color: var(--ink-soft); animation: bob 1.2s steps(2) infinite; }
+  @keyframes bob { 50% { transform: translateY(4px); } }
+  #woods {
+    background: linear-gradient(to bottom, transparent, var(--night) 45vh) ;
+    color: #8f8270; padding-top: 30vh;
+  }
+  #forest { cursor: crosshair; touch-action: pan-y; }
 </style>
 </head>
 <body>
-<canvas id="tape" tabindex="0" role="button" aria-label="cassette tape: play or pause"></canvas>
-<canvas id="meter" aria-hidden="true"></canvas>
-<div class="info">
-  <div class="side" id="side-title"></div>
-  <div class="rec" id="side-rec"></div>
-  <div class="error" id="side-error" role="alert"></div>
-  <div class="hint">click the tape (or space) to play · <button id="flip">flip</button> (f)</div>
-</div>
+<section id="deck">
+  <canvas id="tape" tabindex="0" role="button" aria-label="cassette tape: tap to play or pause, hold to cue, drag up or down to scrub, drag sideways to flip"></canvas>
+  <canvas id="meter" aria-hidden="true"></canvas>
+  <div class="info">
+    <div class="side" id="side-title"></div>
+    <div class="rec" id="side-rec"></div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="error" id="side-error" role="alert"></div>
+    <div class="hint">tap: play · hold: cue · drag ↑↓: scrub · drag ←→: flip · <button id="flip">flip</button></div>
+  </div>
+  <div class="down" aria-hidden="true">↓</div>
+</section>
+<section id="woods">
+  <canvas id="forest" aria-label="pixel painting: feeding a fawn in an autumn wood"></canvas>
+  <div>tap the fawn · tap the trees · tap the ground</div>
+</section>
 
 <script>
 // Each side is a tape-length playlist streamed straight from archive.org;
@@ -98,16 +119,17 @@ const SIDES = [
 SIDES.forEach(s => (s.total = s.tracks.reduce((a, t) => a + t.len, 0)));
 
 // ---------- geometry (cassette pixels; a compact cassette is 100.4 x 63.8 mm) ----------
-const W = 160, H = 102;                // cassette
-const CW = W + 8, CH = H + 8;          // canvas, with room for lift + pixel shadow
+const W = 160, H = 102;
+const PAD_X = 12, PAD_T = 7, PAD_B = 24;             // room for the turn, the lift and spilled tape
+const CW = W + 2 * PAD_X, CH = H + PAD_T + PAD_B;
 const WIN = { x: 44, y: 38, w: 72, h: 23 };
 const HUB_L = { x: 62, y: 49 }, HUB_R = { x: 98, y: 49 };
 const ROLL_L = { x: 20, y: 96 }, ROLL_R = { x: 140, y: 96 };
 const R_HUB = 5, R_CORE = 6, R_FULL = 17;
 const PACK_AREA = R_FULL * R_FULL - R_CORE * R_CORE;   // tape is conserved: rL^2 + rR^2 = const
-const OPENINGS = [[16, 24], [46, 56], [72, 88], [104, 114], [136, 144]];  // x-ranges at the bottom edge
+const OPENINGS = [[16, 24], [46, 56], [72, 88], [104, 114], [136, 144]];
 const TAPE_Y = 98;
-const V = 16;                           // tape speed, cassette px per second
+const V = 16;                                         // tape speed at 1x, cassette px per second
 
 // ---------- pixel font: 3x5 ----------
 const GLYPHS = {
@@ -124,7 +146,7 @@ const GLYPHS = {
 };
 
 const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
-let g;                                  // current drawing context for the helpers below
+let g;
 const px = (x, y, c) => { g.fillStyle = c; g.fillRect(x | 0, y | 0, 1, 1); };
 const rect = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
 const textW = s => s.length * 4 - 1;
@@ -139,7 +161,7 @@ function disc(cx, cy, r, c) {
   for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++)
     if (x * x + y * y <= r * r + r * 0.6) px(cx + x, cy + y, c);
 }
-function line(x0, y0, x1, y1, c) {      // Bresenham
+function line(x0, y0, x1, y1, c) {
   x0 |= 0; y0 |= 0; x1 |= 0; y1 |= 0;
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
   let e = dx + dy;
@@ -151,7 +173,7 @@ function line(x0, y0, x1, y1, c) {      // Bresenham
     if (e2 <= dx) { e += dx; y0 += sy; }
   }
 }
-function rng(seed) {                    // mulberry32: stable wear per sticker
+function rng(seed) {
   return () => {
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -160,33 +182,26 @@ function rng(seed) {                    // mulberry32: stable wear per sticker
   };
 }
 
-// ---------- static layer: shell + sticker, built once per side ----------
+// ---------- static layer: shell + sticker, one per side ----------
 function buildBase(s) {
   const c = mk(W, H); g = c.getContext("2d");
-  // shell, 2px chamfered corners
   rect(2, 0, W - 4, H, "#2b2926"); rect(0, 2, W, H - 4, "#2b2926"); rect(1, 1, W - 2, H - 2, "#2b2926");
   rect(2, 1, W - 4, 1, "#3d3a35"); rect(1, 2, 1, H - 4, "#353230");
   rect(2, H - 2, W - 4, 1, "#1c1a18"); rect(W - 2, 2, 1, H - 4, "#211f1c");
-  // write-protect notches on the top edge
   for (const x of [22, 132]) { rect(x, 0, 6, 2, "#141312"); rect(x, 2, 6, 1, "#1c1a18"); }
-  // five screws with slots
   for (const [x, y] of [[4, 4], [W - 7, 4], [4, H - 7], [W - 7, H - 7], [W / 2 - 1, 66]]) {
     rect(x, y, 3, 3, "#8a857c"); px(x, y, "#b3ada2"); px(x + 1, y + 1, "#4a4640"); px(x + 2, y + 2, "#5d5850");
   }
   drawSticker(s);
-  // window recess + clear rim
   rect(WIN.x - 1, WIN.y - 1, WIN.w + 2, WIN.h + 2, "#34312d");
   rect(WIN.x, WIN.y, WIN.w, WIN.h, "#141312");
-  // lower trapezoid (tape-head area)
   for (let y = 70; y < H - 1; y++) {
-    const inset = Math.max(0, 30 - ((y - 70) >> 2) * 1);
+    const inset = Math.max(0, 30 - ((y - 70) >> 2));
     rect(inset, y, W - 2 * inset, 1, y === 70 ? "#36332f" : "#24221f");
   }
-  // bottom openings, capstan holes, locating holes
   for (const [a, b] of OPENINGS) rect(a, 94, b - a + 1, H - 95, "#0c0b0a");
   for (const x of [38, 122]) { disc(x, 88, 2, "#0c0b0a"); px(x - 1, 86, "#3a3733"); }
-  for (const x of [62, 98]) { rect(x - 1, 85, 3, 3, "#0c0b0a"); }
-  // raised ribs along the trapezoid
+  for (const x of [62, 98]) rect(x - 1, 85, 3, 3, "#0c0b0a");
   for (let x = 34; x < W - 34; x += 6) px(x, 74, "#36332f");
   return c;
 }
@@ -196,13 +211,11 @@ function drawSticker(s) {
   const x0 = 9, y0 = 7, w = W - 18, h = 59;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const edge = Math.min(x, y, w - 1 - x, h - 1 - y), p = r();
-    if (edge < 2 && p < 0.24 - edge * 0.09) continue;       // frayed edge
+    if (edge < 2 && p < 0.24 - edge * 0.09) continue;
     px(x0 + x, y0 + y, p > 0.987 ? "#d1c19b" : p > 0.972 ? "#f1e9d5" : "#e6dabd");
   }
-  for (let i = 0; i < 8; i++) rect(x0 + w - 8 + i, y0, 8 - i, 1, "#2b2926");   // torn-off corner
-  // ruled lines, broken where rubbed
+  for (let i = 0; i < 8; i++) rect(x0 + w - 8 + i, y0, 8 - i, 1, "#2b2926");
   for (const y of [y0 + 19, y0 + 22]) for (let x = 5; x < w - 5; x++) if (r() > 0.12) px(x0 + x, y, "#d8cba9");
-  // mug ring and two scratches
   const cx = x0 + 14 + (r() * 6 | 0), cy = y0 + 44;
   for (let a = 0; a < 48; a++) {
     const t = a / 48 * Math.PI * 1.5 + 0.4;
@@ -210,40 +223,60 @@ function drawSticker(s) {
   }
   line(x0 + 96, y0 + 4, x0 + 118, y0 + 14, "#efe6cf");
   line(x0 + 20, y0 + 52, x0 + 31, y0 + 48, "#d9cba8");
-  // stripe, scuffed
   for (let x = 0; x < w; x++) if (r() > 0.07) rect(x0 + x, y0 + 25, 1, 4, s.stripe);
-  // side box + text
   rect(x0 + 4, y0 + 4, 9, 11, s.stripe); text(s.label, x0 + 7, y0 + 7, "#e6dabd");
   text(s.title, x0 + 17, y0 + 5, "#2a241c");
   text(s.line2, x0 + 17, y0 + 12, "#6a5f4e");
   if (s.tag) text(s.tag, x0 + w - 6 - textW(s.tag), y0 + 12, "#6a5f4e");
   text("C90", x0 + 6, y0 + 50, "#7a6e5a");
   text("TYPE I", x0 + w - 6 - textW("TYPE I"), y0 + 50, "#7a6e5a");
-  // faded arrow pointing in the tape direction
   for (let i = 0; i < 9; i++) px(x0 + 8 + i, y0 + 41, "#b9aa86");
   px(x0 + 15, y0 + 40, "#b9aa86"); px(x0 + 15, y0 + 42, "#b9aa86");
 }
 
-// ---------- dynamic layer ----------
+// ---------- state ----------
 const st = {
   side: 0, playing: false, speed: 0, angL: 0, angR: 0, angRoll: 0, tapePos: 0,
-  hover: false, pressed: false, flipT: -1, glintT: -1,
-  levels: [0, 0], peaks: [0, 0],
+  hover: false, pressed: false, glintT: -1, levels: [0, 0], peaks: [0, 0],
+  // the turn: theta is the visible rotation about the vertical axis
+  theta: 0, thetaV: 0, thetaTarget: 0, thetaGrab: 0, flipDrag: false, flipCommit: null, resumeAfterFlip: false, detent: 0,
+  // handling: scrub follows the finger, cue runs while held
+  scrubbing: false, scrubPos: 0, scrubVel: 0, scrubWasPlaying: false, lastSeek: 0, tickAcc: 0,
+  cue: 0, cueWasPlaying: false,
+  off: 0, offV: 0, offTarget: 0, jx: 0,
+  trouble: null, spill: 0, spillTarget: 0, jolt: null, lastPoke: 0,
+  // rough handling: +1 per tap, wiggle or flip, draining 1 per 2.5 s; past ~20 the tape starts to suffer
+  abuse: 0, abuseBand: 0,
 };
 const bases = SIDES.map(buildBase);
 const frame = mk(W, H);
 
-// seconds into the whole side (tracks before the current one + position in it)
+// ---------- positions along a side ----------
 function sidePos(i) {
-  const s = SIDES[i];
-  let t = 0; for (let k = 0; k < qi[i]; k++) t += s.tracks[k].len;
+  let t = 0; for (let k = 0; k < qi[i]; k++) t += SIDES[i].tracks[k].len;
   return t + (audio[i] ? audio[i].currentTime : 0);
 }
-function progress(i) { return Math.min(1, sidePos(i) / SIDES[i].total); }
+function progress(i) { return Math.min(1, Math.max(0, sidePos(i) / SIDES[i].total)); }
+function locate(i, sec) {
+  const tr = SIDES[i].tracks; let k = 0;
+  sec = Math.max(0, Math.min(sec, SIDES[i].total - 1));
+  while (k < tr.length - 1 && sec >= tr[k].len) { sec -= tr[k].len; k++; }
+  return [k, Math.min(sec, tr[k].len - 0.5)];
+}
+function seekSide(i, sec) {
+  const [k, off] = locate(i, sec), a = audio[i];
+  if (k !== qi[i]) {
+    const wasPlaying = !a.paused;
+    load(i, k, false);
+    a.addEventListener("loadedmetadata", () => { a.currentTime = off; if (wasPlaying) a.play().catch(() => {}); }, { once: true });
+    if (wasPlaying) a.play().catch(() => {});
+  } else if (a.readyState > 0) a.currentTime = off;
+}
 function packRadii(p) {
   return [Math.sqrt(R_CORE * R_CORE + PACK_AREA * (1 - p)), Math.sqrt(R_CORE * R_CORE + PACK_AREA * p)];
 }
 
+// ---------- the moving parts ----------
 function drawPack(c, r, ang) {
   const R = Math.ceil(r);
   for (let y = -R; y <= R; y++) for (let x = -R; x <= R; x++) {
@@ -251,7 +284,7 @@ function drawPack(c, r, ang) {
     if (d > r) continue;
     px(c.x + x, c.y + y, d > r - 1 ? "#5e4433" : (d * 1.4 | 0) % 3 === 0 ? "#42301f" : "#4a3426");
   }
-  for (let k = 0; k < 4; k++) {           // specks wound into the pack show its rotation
+  for (let k = 0; k < 4; k++) {
     const rr = R_CORE + 1 + (k * 2.7 + 1) % Math.max(1, r - R_CORE - 1), t = ang + k * 1.9;
     if (rr < r - 1) px(c.x + Math.round(Math.cos(t) * rr), c.y + Math.round(Math.sin(t) * rr), "#6b4e3a");
   }
@@ -260,12 +293,11 @@ function drawHub(c, ang) {
   disc(c.x, c.y, R_HUB, "#d9d3c7");
   px(c.x - 2, c.y - 4, "#f2eee6"); px(c.x - 3, c.y - 3, "#f2eee6");
   disc(c.x, c.y, 3, "#141312");
-  for (let k = 0; k < 6; k++) {           // six drive teeth
+  for (let k = 0; k < 6; k++) {
     const t = ang + k * Math.PI / 3;
     px(c.x + Math.round(Math.cos(t) * 2.6), c.y + Math.round(Math.sin(t) * 2.6), "#d9d3c7");
   }
 }
-// outer tangent point on circle (c, r) as seen from external point p
 function tangent(c, r, p, pickMinX) {
   const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy);
   const a = Math.atan2(dy, dx), b = Math.acos(Math.min(1, r / d));
@@ -274,90 +306,112 @@ function tangent(c, r, p, pickMinX) {
   return (t1.x < t2.x) === pickMinX ? t1 : t2;
 }
 
-function drawCassette(t) {
+function drawCassette(t, i) {
   g = frame.getContext("2d");
   g.clearRect(0, 0, W, H);
-  g.drawImage(bases[st.side], 0, 0);
-  const [rL, rR] = packRadii(progress(st.side));
-
-  // through the window: packs, hubs, tape leaving toward the guide rollers
+  g.drawImage(bases[i], 0, 0);
+  const [rL, rR] = packRadii(progress(i));
   g.save(); g.beginPath(); g.rect(WIN.x, WIN.y, WIN.w, WIN.h); g.clip();
   drawPack(HUB_L, rL, st.angL); drawPack(HUB_R, rR, st.angR);
   const tl = tangent(HUB_L, rL, ROLL_L, true), tr = tangent(HUB_R, rR, ROLL_R, false);
   line(tl.x, tl.y, ROLL_L.x, ROLL_L.y, "#3b2a1e");
   line(tr.x, tr.y, ROLL_R.x, ROLL_R.y, "#3b2a1e");
   drawHub(HUB_L, st.angL); drawHub(HUB_R, st.angR);
-  // window scale ticks
-  for (let x = WIN.x + 4, i = 0; x < WIN.x + WIN.w - 3; x += 4, i++) rect(x, WIN.y + 1, 1, i % 5 ? 1 : 2, "#77716a");
-  // glint sweeping across the glass
+  for (let x = WIN.x + 4, k = 0; x < WIN.x + WIN.w - 3; x += 4, k++) rect(x, WIN.y + 1, 1, k % 5 ? 1 : 2, "#77716a");
+  // slack tape sagging across the window when something is wrong
+  if (st.trouble && st.trouble.kind !== "stick") for (let x = 66; x < 96; x++)
+    px(x, WIN.y + WIN.h - 3 + Math.round(Math.sin((x - 66) / 30 * Math.PI) * 2 + Math.sin(t / 140 + x / 3) * 0.6), "#5e4433");
   if (st.glintT >= 0) {
     const gx = WIN.x - 12 + (t - st.glintT) / 600 * (WIN.w + 24);
     for (let y = 0; y < WIN.h; y++) for (let k = 0; k < 3; k++) px(gx + k - y * 0.5, WIN.y + y, "rgba(255,255,255,0.13)");
   }
   g.restore();
-
-  // tape across the bottom openings: streaks move with the tape
-  for (const [a, b] of OPENINGS) for (let x = a; x <= b; x++) {
-    const streak = ((x + (st.tapePos | 0)) % 7 + 7) % 7 === 0;
-    px(x, TAPE_Y, streak ? "#6b4e3a" : "#4a3426");
-  }
-  // guide rollers (visible in the corner openings), turning
+  for (const [a, b] of OPENINGS) for (let x = a; x <= b; x++)
+    px(x, TAPE_Y, ((x + (st.tapePos | 0)) % 7 + 7) % 7 === 0 ? "#6b4e3a" : "#4a3426");
   for (const R of [ROLL_L, ROLL_R]) {
     disc(R.x, R.y, 2, "#bdb6a9");
     px(R.x + Math.round(Math.cos(st.angRoll) * 1.4), R.y + Math.round(Math.sin(st.angRoll) * 1.4), "#6d675e");
   }
-  // pressure pad: felt on a leaf spring, shivering while the tape runs
-  const jit = st.speed > 0.3 && (t / 45 | 0) % 2 ? 1 : 0;
+  const jit = Math.abs(st.speed) > 0.3 && (t / 45 | 0) % 2 ? 1 : 0;
   rect(76 + jit, 99, 9, 2, "#c8b98a"); rect(74, 101, 13, 1, "#8a857c");
-
-  // the torn corner's last flap of paper lifts in the draft
   const lift = (st.hover || st.playing) && (t / 170 | 0) % 2;
   const fx = W - 17, fy = 7;
-  for (let i = 0; i < 6; i++) px(fx + i + lift, fy + 6 - i - lift, i < 2 ? "#cbbd98" : "#ddd0ae");
+  for (let k = 0; k < 6; k++) px(fx + k + lift, fy + 6 - k - lift, k < 2 ? "#cbbd98" : "#ddd0ae");
   if (lift) px(fx + 6, fy, "#f1e9d5");
 }
 
-// ---------- compositing: lift, press, pixel shadow, stepped flip ----------
+// ---------- compositing: the turn, lift, press, jolt, spilled tape ----------
 const cv = document.getElementById("tape"), out = cv.getContext("2d");
 cv.width = CW; cv.height = CH;
-const FLIP_STEPS = [1, 0.72, 0.42, 0.14, 0.14, 0.42, 0.72, 1];
+function drawSpine(x, y, w, left) {
+  out.fillStyle = "#24221f"; out.fillRect(x, y + 2, w, H - 4); out.fillRect(x + (w > 2 ? 1 : 0), y + 1, Math.max(1, w - 2), H - 2);
+  out.fillStyle = "#3d3a35"; out.fillRect(left ? x : x + w - 1, y + 2, 1, H - 4);
+  out.fillStyle = "#141312";
+  if (w > 3) for (const yy of [18, H - 24]) out.fillRect(x + 1, y + yy, w - 2, 4);
+}
 function compose(t) {
-  drawCassette(t);
   out.imageSmoothingEnabled = false;
   out.clearRect(0, 0, CW, CH);
-  let w = W;
-  if (st.flipT >= 0) {
-    const i = Math.min(FLIP_STEPS.length - 1, (t - st.flipT) / 55 | 0);
-    w = Math.max(2, Math.round(W * FLIP_STEPS[i]));
+  const th = st.theta, c = Math.cos(th), s = Math.sin(th);
+  const faceSide = c >= 0 ? st.side : 1 - st.side;
+  drawCassette(t, faceSide);
+  const faceW = Math.round(Math.abs(c) * W / 2) * 2;
+  const spineW = Math.round(Math.abs(s) * 9);
+  const spineLeft = Math.sign(th) * c > 0;
+  const total = faceW + spineW;
+  let jx = st.jx, jy = 0;
+  const dist = distortion();                                     // a mistreated deck shudders
+  if (dist > 0.3 && hash01(t / 70 | 0) < dist * 0.35) { jx += hash01(t / 70 + 7 | 0) < 0.5 ? -1 : 1; }
+  if (st.jolt) {
+    const k = 1 - (t - st.jolt.t0) / 170;
+    if (k <= 0) st.jolt = null; else { jx += Math.round(st.jolt.dx * k); jy += Math.round(st.jolt.dy * k); }
   }
   const lift = st.pressed ? 0 : st.hover ? 2 : 1;
-  const x = 4 + ((W - w) >> 1), y = 4 - lift + 1;
+  const x0 = Math.round((CW - total) / 2) + jx, y0 = PAD_T + 1 - lift + Math.round(st.off) + jy;
   out.fillStyle = "rgba(60, 45, 25, 0.22)";
-  out.fillRect(x + lift + 1, y + lift + 2, w, H);
-  out.drawImage(frame, 0, 0, W, H, x, y, w, H);
+  out.fillRect(x0 + lift + 1, PAD_T + 3 + jy, total, H);
+  const fx = spineLeft ? x0 + spineW : x0, sx = spineLeft ? x0 : x0 + faceW;
+  if (faceW > 0) {
+    out.drawImage(frame, 0, 0, W, H, fx, y0, faceW, H);
+    if (faceW < W) { out.fillStyle = `rgba(20, 14, 8, ${(1 - Math.abs(c)) * 0.45})`; out.fillRect(fx, y0, faceW, H); }
+  }
+  if (spineW > 0) drawSpine(sx, y0, spineW, spineLeft);
+  // a loop of tape pulled out of the bottom opening
+  if (st.spill > 0.4 && faceW > W * 0.6) {
+    const cx = fx + 80 * faceW / W, L = st.spill, r = 4 + L * 0.2;
+    for (let a = 0; a < 6.283; a += 0.04) {
+      const xx = cx + Math.sin(a) * r * (1 + 0.25 * Math.sin(3 * a + t / 170)) * faceW / W;
+      const yy = y0 + H - 3 + (1 - Math.cos(a)) / 2 * L + Math.sin(2 * a + t / 230) * 1.2 * (L / 18);
+      out.fillStyle = a < 3.14 ? "#4a3426" : "#6b4e3a";
+      out.fillRect(Math.round(xx), Math.round(yy), 1, 1);
+    }
+    out.fillStyle = "#c9a27a"; const ga = (t / 300) % 6.283;
+    out.fillRect(Math.round(cx + Math.sin(ga) * r * faceW / W), Math.round(y0 + H - 3 + (1 - Math.cos(ga)) / 2 * L), 1, 1);
+  }
 }
 
 // ---------- meter: tape counter + stereo LED bars ----------
 const mv = document.getElementById("meter"), mg = mv.getContext("2d");
 const MW = 66, MH = 11;
 mv.width = MW; mv.height = MH;
-function drawMeter() {
+function drawMeter(t) {
   g = mg;
   rect(1, 0, MW - 2, MH, "#2b2926"); rect(0, 1, MW, MH - 2, "#2b2926");
   rect(2, 2, 15, 7, "#141312");
-  const n = Math.floor(sidePos(st.side) / 3) % 1000;   // ~3 s per count, like a deck's tape counter
+  const n = Math.floor(sidePos(st.side) / 3) % 1000;
   text(String(n).padStart(3, "0"), 4, 3, "#e6dabd");
+  const flicker = (st.trouble && (t / 90 | 0) % 3 === 0) || hash01(t / 90 | 0) < distortion() * 0.4;
   for (let ch = 0; ch < 2; ch++) {
-    const lit = Math.round(st.levels[ch] * 15), pk = Math.round(st.peaks[ch] * 15);
-    for (let i = 0; i < 15; i++) {
-      const on = i < lit || (i === pk - 1 && pk > 0);
-      const col = i < 10 ? ["#7a9a4a", "#34402a"] : i < 13 ? ["#d0a040", "#4a3f26"] : ["#c8503a", "#4a2a24"];
-      rect(20 + i * 3, 2 + ch * 4, 2, 3, on ? col[0] : col[1]);
+    const lit = flicker ? 0 : Math.round(st.levels[ch] * 15), pk = Math.round(st.peaks[ch] * 15);
+    for (let k = 0; k < 15; k++) {
+      const on = k < lit || (k === pk - 1 && pk > 0);
+      const col = k < 10 ? ["#7a9a4a", "#34402a"] : k < 13 ? ["#d0a040", "#4a3f26"] : ["#c8503a", "#4a2a24"];
+      rect(20 + k * 3, 2 + ch * 4, 2, 3, on ? col[0] : col[1]);
     }
   }
 }
 function fit() {
-  const k = Math.max(1, Math.min(Math.floor(Math.min(innerWidth * 0.94, 760) / CW), Math.floor(innerHeight * 0.62 / CH)));
+  const k = Math.max(1, Math.min(Math.floor(Math.min(innerWidth * 0.96, 820) / CW), Math.floor(innerHeight * 0.6 / CH)));
   cv.style.width = CW * k + "px"; cv.style.height = CH * k + "px";
   const km = Math.max(1, Math.floor(k * 0.75));
   mv.style.width = MW * km + "px"; mv.style.height = MH * km + "px";
@@ -367,9 +421,9 @@ function fit() {
 const audio = SIDES.map(() => { const a = new Audio(); a.preload = "none"; a.preservesPitch = false; return a; });
 const qi = SIDES.map(() => 0);
 const wired = SIDES.map(() => null);
-const routable = SIDES.map(() => null);   // null = unchecked; true/false after the CORS probe
+const routable = SIDES.map(() => null);
 const errRun = SIDES.map(() => 0);
-let ac, hiss, buf;
+let ac, hiss, squeal, squealGain, clickBuf;
 
 function load(i, k, cue) {
   const tr = SIDES[i].tracks[k];
@@ -378,20 +432,19 @@ function load(i, k, cue) {
 }
 function advance(i) {
   load(i, (qi[i] + 1) % SIDES[i].tracks.length, false);
-  if (st.playing && st.side === i) audio[i].play().catch(e => fail(e.message));
+  if ((st.playing || st.scrubbing || st.cue) && st.side === i) audio[i].play().catch(e => fail(e.message));
 }
 audio.forEach((a, i) => {
   a.addEventListener("ended", () => advance(i));
   a.addEventListener("playing", () => (errRun[i] = 0));
   a.addEventListener("error", () => {
     if (!a.getAttribute("src")) return;
-    // skip a dead track; give up loudly only when several in a row fail
     if (++errRun[i] < Math.min(3, SIDES[i].tracks.length)) return advance(i);
     fail(`side ${SIDES[i].label}: ${errRun[i]} tracks in a row would not play (media error ${a.error ? a.error.code : "?"})`);
   });
 });
 
-// Routing an element through Web Audio needs CORS on *every* track it will
+// Routing an element through Web Audio needs CORS on every track it will
 // play; a non-CORS track routed this way plays as silence with no error. So
 // probe each distinct host item first and route only if all of them pass.
 async function probeCors(i) {
@@ -406,23 +459,52 @@ async function probeCors(i) {
   return routable[i];
 }
 
-function audioGraph(i) {
-  if (!ac) {
-    ac = new AudioContext();
-    // hiss: band-limited noise with sparse crackle, synthesized here
-    const len = ac.sampleRate * 3; buf = ac.createBuffer(1, len, ac.sampleRate);
-    const d = buf.getChannelData(0); let lp = 0;
-    for (let n = 0; n < len; n++) {
-      lp = lp * 0.82 + (Math.random() * 2 - 1) * 0.18;
-      d[n] = lp + (Math.random() < 0.0004 ? (Math.random() * 2 - 1) * 0.9 : 0);
-    }
-    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
-    const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900;
-    hiss = ac.createGain(); hiss.gain.value = 0;
-    src.connect(hp).connect(hiss).connect(ac.destination); src.start();
+function ensureContext() {
+  if (ac) { ac.resume(); return; }
+  ac = new AudioContext();
+  // hiss: band-limited noise with sparse crackle, synthesized here
+  const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = buf.getChannelData(0); let lp = 0;
+  for (let n = 0; n < len; n++) {
+    lp = lp * 0.82 + (Math.random() * 2 - 1) * 0.18;
+    d[n] = lp + (Math.random() < 0.00008 ? (Math.random() * 2 - 1) * 0.6 : 0);
   }
+  const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+  const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900;
+  hiss = ac.createGain(); hiss.gain.value = 0;
+  src.connect(hp).connect(hiss).connect(ac.destination); src.start();
+  // rewind squeal: a band-passed sawtooth whose pitch follows the reels
+  squeal = ac.createOscillator(); squeal.type = "sawtooth"; squeal.frequency.value = 700;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1400; bp.Q.value = 3;
+  squealGain = ac.createGain(); squealGain.gain.value = 0;
+  squeal.connect(bp).connect(squealGain).connect(ac.destination); squeal.start();
+  // one short noise grain, reused for every click
+  clickBuf = ac.createBuffer(1, ac.sampleRate * 0.08 | 0, ac.sampleRate);
+  const cd = clickBuf.getChannelData(0);
+  for (let n = 0; n < cd.length; n++) cd[n] = (Math.random() * 2 - 1) * Math.exp(-n / (ac.sampleRate * 0.006));
+  ac.resume();
+}
+// Tactile clicks: a filtered noise grain (tick < clack < clunk) and, where
+// the device has one, a matching buzz.
+const CLICKS = { tick: [3200, 0.10, 4], clack: [1300, 0.22, 10], clunk: [420, 0.35, 18] };
+let lastClick = 0;
+function click(kind) {
+  const now = performance.now();
+  if (now - lastClick < 28) return;
+  lastClick = now;
+  const [f, gain, buzz] = CLICKS[kind];
+  if (navigator.vibrate) try { navigator.vibrate(buzz); } catch {}
+  if (!ac || !clickBuf) return;
+  const s = ac.createBufferSource(); s.buffer = clickBuf; s.playbackRate.value = 0.85 + Math.random() * 0.3;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f * (0.9 + Math.random() * 0.2); bp.Q.value = 1.6;
+  const gn = ac.createGain(); gn.gain.value = gain;
+  s.connect(bp).connect(gn).connect(ac.destination); s.start();
+}
+
+function audioGraph(i) {
+  ensureContext();
   if (!wired[i] && routable[i]) {
-    // tape colouring: gentle top-end roll-off and soft saturation; analysers feed the meter
+    // tape colouring: top-end roll-off and soft saturation; analysers feed the meter
     const src = ac.createMediaElementSource(audio[i]);
     const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 9500;
     const sat = ac.createWaveShaper(), curve = new Float32Array(1024);
@@ -434,21 +516,29 @@ function audioGraph(i) {
     src.connect(lp).connect(sat);
     sat.connect(ac.destination); sat.connect(split);
     split.connect(an[0], 0); split.connect(an[1], 1);
-    wired[i] = { an, data: new Float32Array(512), zeroSince: 0 };
+    wired[i] = { an, lp, data: new Float32Array(512), zeroSince: 0 };
   }
-  ac.resume();
+}
+async function prepare(i) {
+  const a = audio[i];
+  ensureContext();                      // inside the gesture: the context may only start here
+  if (!a.getAttribute("src")) {
+    if (await probeCors(i)) a.crossOrigin = "anonymous";
+    load(i, 0, true);
+  }
+  audioGraph(i);
 }
 function readLevels(dt, t) {
   const w = wired[st.side], a = audio[st.side];
   for (let ch = 0; ch < 2; ch++) {
     let lvl = 0;
-    if (w && st.playing) {
+    if (w && !a.paused) {
       w.an[ch].getFloatTimeDomainData(w.data);
       let s = 0; for (const v of w.data) s += v * v;
       // watchdog: exact digital zero for 4 s while the clock runs means the
       // browser is muting a cross-origin track -- say so instead of playing silence
       if (ch === 0) {
-        if (s === 0 && !a.paused && a.currentTime > 1) {
+        if (s === 0 && a.currentTime > 1 && !st.scrubbing) {
           if (!w.zeroSince) w.zeroSince = t;
           else if (t - w.zeroSince > 4000) { pause(); fail(`side ${SIDES[st.side].label}: the stream is muted by the browser (no CORS on this track); reload to play it unrouted`); routable[st.side] = false; }
         } else w.zeroSince = 0;
@@ -461,65 +551,327 @@ function readLevels(dt, t) {
   }
 }
 
-// ---------- animation loop (runs only while something moves) ----------
+// ---------- trouble: a small chance per play that the deck acts up ----------
+// Forced for testing with #glitch=spill | stick | mud in the URL.
+const TROUBLE = {
+  spill: { pokes: [2, 3], msg: "the deck is eating the tape · poke it" },
+  stick: { pokes: [2, 3], msg: "the reels are sticking · give it a tap" },
+  mud:   { pokes: [2, 3], msg: "it has gone muddy · tap to reseat it" },
+};
+const forced = (location.hash.match(/glitch=(\w+)/) || [])[1];
+function maybeTrouble() {
+  if (st.trouble || !(forced || Math.random() < 0.04)) return;
+  const kinds = Object.keys(TROUBLE), kind = TROUBLE[forced] ? forced : kinds[Math.random() * kinds.length | 0];
+  setTimeout(() => { if (st.playing && !st.trouble) startTrouble(kind); }, forced ? 1200 : 2000 + Math.random() * 9000);
+}
+function startTrouble(kind) {
+  const [lo, hi] = TROUBLE[kind].pokes;
+  st.trouble = { kind, left: lo + (Math.random() * (hi - lo + 1) | 0) };
+  if (kind === "spill") st.spillTarget = 13 + Math.random() * 5;
+  if (kind === "mud" && wired[st.side]) wired[st.side].lp.frequency.setTargetAtTime(900, ac.currentTime, 0.2);
+  status(TROUBLE[kind].msg);
+  click("clack"); kick();
+}
+function poke() {
+  const now = performance.now();
+  if (now - st.lastPoke < 110) return;
+  st.lastPoke = now;
+  st.jolt = { t0: now, dx: (Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * 2 | 0)), dy: -1 - (Math.random() * 2 | 0) };
+  click("clack");
+  if (!st.trouble) return kick();
+  if (--st.trouble.left <= 0) {
+    st.spillTarget = 0;
+    for (const w of wired) if (w) w.lp.frequency.setTargetAtTime(9500, ac.currentTime, 0.15);
+    audio.forEach(a => (a.volume = 1));
+    st.trouble = null;
+    status("there.");
+    setTimeout(() => { if (!st.trouble) status(""); }, 1800);
+  } else {
+    if (st.trouble.kind === "spill") st.spillTarget *= 0.72;
+    status(TROUBLE[st.trouble.kind].msg + " " + "·".repeat(st.trouble.left));
+  }
+  kick();
+}
+function status(s) { document.getElementById("status").textContent = s; }
+
+// ---------- the loop (runs only while something moves) ----------
+function spring(x, v, target, k, zeta, dt) {
+  const a = -k * (x - target) - 2 * zeta * Math.sqrt(k) * v;
+  v += a * dt; return [x + v * dt, v];
+}
 let raf = 0, last = 0;
-function moving(t) {
-  return st.playing || st.speed > 0.01 || st.hover || st.flipT >= 0 || st.glintT >= 0 ||
-    st.levels[0] + st.levels[1] + st.peaks[0] + st.peaks[1] > 0.01;
+function moving() {
+  return st.playing || st.scrubbing || st.cue || st.trouble || st.jolt || st.hover || st.flipDrag || st.flipCommit !== null || st.abuse > 0 ||
+    Math.abs(st.speed) > 0.01 || Math.abs(st.off) > 0.05 || Math.abs(st.offV) > 0.05 || Math.abs(st.spill - st.spillTarget) > 0.1 ||
+    st.glintT >= 0 || st.levels[0] + st.levels[1] + st.peaks[0] + st.peaks[1] > 0.01;
 }
 function tick(t) {
-  const dt = Math.min(0.1, (t - (last || t)) / 1000); last = t;
-  st.speed += ((st.playing ? 1 : 0) - st.speed) * (1 - Math.exp(-dt / 0.28));   // coast up / spin down
-  const [rL, rR] = packRadii(progress(st.side));
+  const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+  const i = st.side, a = audio[i];
+  st.abuse = Math.max(0, st.abuse - dt / 2.5);
+  const dist = distortion();
+  abuseStatus();
+
+  // the turn: stiff spring while held (it has weight, but follows), a looser bouncy one once let go
+  if (st.flipDrag) [st.theta, st.thetaV] = spring(st.theta, st.thetaV, st.thetaTarget, 900, 0.9, dt);
+  else if (st.flipCommit !== null) {
+    [st.theta, st.thetaV] = spring(st.theta, st.thetaV, st.flipCommit, 170, 0.42, dt);
+    if (Math.abs(st.theta - st.flipCommit) < 0.01 && Math.abs(st.thetaV) < 0.08) settleFlip();
+  }
+  const det = Math.floor(st.theta / (Math.PI / 10));
+  if (det !== st.detent) { st.detent = det; if (st.flipDrag || st.flipCommit !== null) click("tick"); }
+
+  [st.off, st.offV] = spring(st.off, st.offV, st.offTarget, 380, 0.5, dt);
+  st.spill += (st.spillTarget - st.spill) * (1 - Math.exp(-dt / 0.25));
+  if (st.spill < 0.4 && st.spillTarget === 0) st.spill = 0;
+
+  // reels: follow the transport, the scrubbing finger, or the cue
+  let want = st.playing ? 1 : 0;
+  if (st.scrubbing) want = Math.max(-14, Math.min(14, st.scrubVel));
+  else if (st.cue > 0) want = 7;
+  else if (st.cue < 0) want = -9;
+  const tk = st.trouble && st.playing ? st.trouble.kind : null;
+  if (tk === "stick") want *= ((t / 170) | 0) % 3 === 0 ? 0.08 : 1;
+  if (tk === "spill") want *= 0.55 + 0.45 * Math.sin(t / 130);
+  st.speed += (want - st.speed) * (1 - Math.exp(-dt / (st.scrubbing ? 0.06 : 0.2)));
+  const [rL, rR] = packRadii(progress(i));
   st.angL += st.speed * V / rL * dt;    // constant tape speed: the smaller pack spins faster
   st.angR += st.speed * V / rR * dt;
   st.angRoll += st.speed * V / 2 * dt;
   st.tapePos -= st.speed * V * dt;
-  if (st.playing) audio[st.side].playbackRate = 1 + 0.002 * Math.sin(t / 900) + 0.001 * Math.sin(t / 61);  // wow + flutter
-  if (st.glintT >= 0 && t - st.glintT > 600) st.glintT = -1;
-  if (st.flipT >= 0) {
-    const i = (t - st.flipT) / 55 | 0;
-    if (i >= 4 && !st.flipSwapped) { st.flipSwapped = true; st.side = 1 - st.side; label(); }
-    if (i >= FLIP_STEPS.length) { st.flipT = -1; if (st.resumeAfterFlip) play(); }
+
+  // transport
+  if (st.scrubbing) {
+    st.scrubVel *= Math.exp(-dt / 0.12);  // the finger stopped: so does the tape
+    const back = st.scrubVel < -0.6;
+    if (back && !a.paused) a.pause();
+    if (!back && a.paused && a.readyState > 0) a.play().catch(() => {});
+    if (t - st.lastSeek > 90 && Math.abs(sidePos(i) - st.scrubPos) > 0.25) { st.lastSeek = t; seekSide(i, st.scrubPos); }
+    a.playbackRate = Math.max(0.5, Math.min(4, 1 + Math.max(0, st.scrubVel - 1) * 0.5));
+    setSqueal(back ? Math.min(1, -st.scrubVel / 8) : 0, -st.scrubVel);
+  } else if (st.cue < 0) {
+    if (!a.paused) a.pause();
+    st.scrubPos = Math.max(0, st.scrubPos - 24 * dt);
+    if (t - st.lastSeek > 120) { st.lastSeek = t; seekSide(i, st.scrubPos); }
+    setSqueal(0.8, 9);
+  } else {
+    setSqueal(0, 0);
+    if (st.playing || st.cue > 0) {
+      let rate = st.cue > 0 ? 3.5 : 1;
+      // a healthy deck barely wavers; a glitch adds a little; rough handling adds a lot
+      const wow = (tk === "spill" ? 0.012 : tk === "mud" ? 0.004 : 0.001) + 0.035 * dist;
+      rate *= 1 + wow * Math.sin(t / 900) + (0.0004 + 0.012 * dist) * Math.sin(t / 61) +
+        (tk === "spill" ? 0.006 * Math.sin(t / 97) : 0) + 0.02 * dist * Math.sin(t / 37 + Math.sin(t / 290) * 3);
+      if (tk === "stick") rate *= ((t / 170) | 0) % 4 === 0 ? 0.92 : 1;
+      a.playbackRate = Math.max(0.5, Math.min(4, rate));
+      let vol = tk === "spill" ? ((t % 1600) < 160 ? 0.55 : 1) : tk === "stick" ? (((t / 170) | 0) % 4 === 0 ? 0.7 : 1) :
+        tk === "mud" && !wired[i] ? 0.6 : 1;
+      if (dist > 0.3 && hash01(t / 90 | 0) < (dist - 0.3) * 0.5) vol *= 0.15;     // dropouts from a creased tape
+      a.volume = Math.max(0, Math.min(1, vol * (1 - 0.25 * dist * (0.5 + 0.5 * Math.sin(t / 23)))));
+    }
   }
+  if (wired[i]) wired[i].lp.frequency.setTargetAtTime(tk === "mud" ? 900 : 9500 - 8000 * dist, ac.currentTime, 0.2);
+  // reel ticks while it is being handled
+  if (st.scrubbing || st.cue) { st.tickAcc += Math.abs(st.speed) * dt; if (st.tickAcc > 0.9) { st.tickAcc = 0; click("tick"); } }
+  if (hiss) hiss.gain.setTargetAtTime(st.scrubbing || st.cue ? 0.03 : st.playing ? 0.012 + 0.03 * dist : 0, ac.currentTime, 0.1);
+
+  if (st.glintT >= 0 && t - st.glintT > 600) st.glintT = -1;
   readLevels(dt, t);
-  compose(t); drawMeter();
-  raf = moving(t) ? requestAnimationFrame(tick) : 0;
+  compose(t); drawMeter(t);
+  raf = moving() ? requestAnimationFrame(tick) : 0;
   if (!raf) last = 0;
 }
 function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+function setSqueal(level, vel) {
+  if (!squealGain) return;
+  squealGain.gain.setTargetAtTime(level * 0.025, ac.currentTime, 0.05);
+  squeal.frequency.setTargetAtTime(500 + Math.min(14, Math.abs(vel)) * 110, ac.currentTime, 0.05);
+}
 
-// ---------- controls ----------
+// ---------- transport ----------
+let playing$ = null;
 async function play() {
   const i = st.side, a = audio[i];
-  try {
-    if (!a.getAttribute("src")) {
-      // the AudioContext must start inside the click; the CORS probe can wait
-      if (!ac) audioGraph(-1);
-      if (await probeCors(i)) a.crossOrigin = "anonymous";
-      load(i, 0, true);
-    }
-    audioGraph(i);
-    hiss.gain.setTargetAtTime(0.05, ac.currentTime, 0.3);
-    await a.play();
-    st.playing = true; clearError(); kick();
-  } catch (e) { fail(e.message); }
+  playing$ = (async () => {
+    try {
+      await prepare(i);
+      await a.play();
+      st.playing = true; clearError(); kick();
+      maybeTrouble();
+    } catch (e) { fail(e.message); }
+  })();
+  return playing$;
 }
 function pause() {
   audio[st.side].pause(); st.playing = false;
-  if (hiss) hiss.gain.setTargetAtTime(0, ac.currentTime, 0.15);
   kick();
 }
-function toggle() { st.playing ? pause() : play(); }
-function flip() {
-  if (st.flipT >= 0) return;
+function toggle() { click("clunk"); st.playing ? pause() : play(); }
+function tap() { handled(); if (st.trouble) poke(); else toggle(); }
+function handled() { st.abuse += 1; kick(); }
+const hash01 = n => { let h = Math.imul(n | 0, 2654435761); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
+// distortion from rough handling: 0 below ~20 handlings, 1 by ~45
+const distortion = () => Math.max(0, Math.min(1, (st.abuse - 20) / 25));
+const ABUSE_MSG = ["", "careful…", "you're chewing it up", "it's mangled · let it rest"];
+function abuseStatus() {
+  const d = distortion(), band = d <= 0 ? 0 : d < 0.4 ? 1 : d < 0.85 ? 2 : 3;
+  if (band === st.abuseBand) return;
+  const healing = band < st.abuseBand;
+  st.abuseBand = band;
+  if (st.trouble) return;
+  status(band ? ABUSE_MSG[band] : healing ? "it's settling" : "");
+  if (!band && healing) setTimeout(() => { if (!st.abuseBand && !st.trouble) status(""); }, 1800);
+}
+
+// the turn
+function startFlipDrag() {
+  st.resumeAfterFlip = st.resumeAfterFlip || st.playing;
+  if (st.playing) pause();
+  handled();
+  st.flipDrag = true; st.thetaGrab = st.flipCommit !== null ? st.theta : 0; st.flipCommit = null; st.thetaTarget = st.theta;
+  kick();
+}
+function endFlipDrag(vel) {
+  st.flipDrag = false;
+  const th = st.theta, dir = Math.sign(th) || Math.sign(vel) || 1;
+  const go = Math.abs(th) > Math.PI / 2 || (Math.abs(vel) > 5 && Math.sign(vel) === Math.sign(th));
+  st.flipCommit = go ? dir * Math.PI : 0;
+  kick();
+}
+function flipBy(dir) {
+  if (st.flipCommit !== null || st.flipDrag) return;
+  handled();
   st.resumeAfterFlip = st.playing;
   if (st.playing) pause();
-  st.flipSwapped = false; st.flipT = performance.now(); kick();
+  click("tick");
+  st.thetaV = dir * 3; st.flipCommit = dir * Math.PI; kick();
 }
+function settleFlip() {
+  const flipped = st.flipCommit !== 0;
+  st.theta = 0; st.thetaV = 0; st.flipCommit = null; st.detent = 0;
+  click("clack");
+  if (flipped) { st.side = 1 - st.side; label(); }
+  if (st.resumeAfterFlip) { st.resumeAfterFlip = false; play(); }
+}
+
+// scrub: the tape moves with the finger; faster strokes cover more of it
+function startScrub() {
+  st.scrubbing = true; st.scrubWasPlaying = st.playing; st.scrubVel = 0; st.tickAcc = 0;
+  st.scrubPos = sidePos(st.side);
+  prepare(st.side).then(() => {
+    st.scrubPos = sidePos(st.side);
+    if (st.scrubbing) audio[st.side].play().catch(() => {});
+  });
+  kick();
+}
+function scrubBy(dyCss, dtMs) {
+  const v = Math.abs(dyCss) / Math.max(8, dtMs) * 1000;         // finger speed, css px/s
+  const gain = 0.12 * (1 + Math.min(8, v / 250));               // pointer acceleration: ~0.15 s/px slow, ~1 s/px flung
+  const dsec = -dyCss * gain;
+  const tot = SIDES[st.side].total;
+  st.scrubPos = Math.max(0, Math.min(tot - 1, st.scrubPos + dsec));
+  st.scrubVel = st.scrubVel * 0.5 + (dsec / Math.max(0.008, dtMs / 1000)) * 0.5;
+}
+function endScrub() {
+  st.scrubbing = false; st.scrubVel = 0; setSqueal(0, 0);
+  const a = audio[st.side];
+  a.playbackRate = 1;
+  if (!st.scrubWasPlaying) Promise.resolve(playing$).then(() => { if (!st.playing) a.pause(); });
+  else a.play().catch(() => {});
+  click("tick"); kick();
+}
+// cue: held without moving (or arrow keys): run fast while held
+function startCue(dir) {
+  st.cue = dir; st.cueWasPlaying = st.playing; st.scrubPos = sidePos(st.side);
+  click("clunk");
+  prepare(st.side).then(() => { st.scrubPos = sidePos(st.side); if (st.cue > 0) audio[st.side].play().catch(() => {}); });
+  kick();
+}
+function endCue() {
+  if (!st.cue) return;
+  st.cue = 0; setSqueal(0, 0);
+  const a = audio[st.side]; a.playbackRate = 1;
+  if (st.cueWasPlaying) a.play().catch(() => {}); else Promise.resolve(playing$).then(() => { if (!st.playing) a.pause(); });
+  click("clunk"); kick();
+}
+
+// ---------- pointer: tap, hold, drag up/down, drag sideways ----------
+let ptr = null;
+const kpx = () => cv.getBoundingClientRect().width / CW;      // css px per cassette px
+cv.addEventListener("pointerdown", e => {
+  if (ptr) return;
+  cv.setPointerCapture(e.pointerId);
+  cv.classList.add("grabbing");
+  ensureContext();
+  ptr = { id: e.pointerId, x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, lt: e.timeStamp, axis: null, vel: 0, lastDir: 0 };
+  ptr.hold = setTimeout(() => { if (ptr && !ptr.axis) { ptr.axis = "cue"; startCue(1); } }, 380);
+  st.pressed = true; click("tick"); kick();
+});
+cv.addEventListener("pointermove", e => {
+  if (!ptr || e.pointerId !== ptr.id) return;
+  const dx = e.clientX - ptr.x0, dy = e.clientY - ptr.y0, k = kpx();
+  const mdx = e.clientX - ptr.lx, mdy = e.clientY - ptr.ly, mdt = Math.max(1, e.timeStamp - ptr.lt);
+  ptr.lx = e.clientX; ptr.ly = e.clientY; ptr.lt = e.timeStamp;
+  if (!ptr.axis && Math.hypot(dx, dy) > 6) {
+    clearTimeout(ptr.hold);
+    ptr.axis = st.trouble ? "jiggle" : Math.abs(dx) > Math.abs(dy) ? "flip" : "scrub";
+    if (ptr.axis === "flip") startFlipDrag();
+    if (ptr.axis === "scrub") startScrub();
+  }
+  if (ptr.axis === "cue" && Math.abs(dy) > 10) { endCue(); ptr.axis = "scrub"; startScrub(); }
+  if (ptr.axis === "flip") {
+    // a little stiction off the rest position, a rubber band past the half-turn
+    const raw = Math.PI * dx / (W * k * 0.85), a = Math.abs(raw);
+    let th = a < 0.12 ? a * 0.4 : 0.048 + (a - 0.12);
+    if (th > Math.PI) th = Math.PI + Math.tanh((th - Math.PI) / 0.6) * 0.3;
+    st.thetaTarget = st.thetaGrab + Math.sign(raw) * th;
+    ptr.vel = ptr.vel * 0.6 + (Math.PI * mdx / (W * k * 0.85)) / (mdt / 1000) * 0.4;
+  }
+  if (ptr.axis === "scrub") {
+    scrubBy(mdy, mdt);
+    st.offTarget = Math.tanh(dy / (k * 40)) * 4;                // it follows a few px, then resists
+  }
+  if (ptr.axis === "jiggle") {
+    st.jx = Math.round(Math.tanh(dx / (k * 30)) * 3);
+    const dir = Math.sign(mdx);
+    if (dir && Math.abs(mdx) > 2) { if (ptr.lastDir && dir !== ptr.lastDir) { handled(); poke(); } ptr.lastDir = dir; }
+  }
+  kick();
+});
+function release(e) {
+  if (!ptr || e.pointerId !== ptr.id) return;
+  clearTimeout(ptr.hold);
+  cv.classList.remove("grabbing");
+  st.pressed = false; st.offTarget = 0; st.jx = 0;
+  if (ptr.axis === "flip") endFlipDrag(ptr.vel);
+  else if (ptr.axis === "scrub") endScrub();
+  else if (ptr.axis === "cue") endCue();
+  else if (!ptr.axis && e.type === "pointerup") tap();
+  ptr = null; kick();
+}
+cv.addEventListener("pointerup", release);
+cv.addEventListener("pointercancel", release);
+cv.addEventListener("pointerenter", () => { st.hover = true; kick(); });
+cv.addEventListener("pointerleave", () => { st.hover = false; kick(); });
+cv.addEventListener("contextmenu", e => e.preventDefault());
+document.getElementById("flip").addEventListener("click", () => { ensureContext(); flipBy(1); });
+let keyCue = null;
+addEventListener("keydown", e => {
+  if (e.target.tagName === "BUTTON") return;
+  const onDeck = document.activeElement === cv || scrollY < innerHeight * 0.4;
+  if (!onDeck) return;
+  if (e.key === " " || e.key === "Enter") { e.preventDefault(); ensureContext(); tap(); }
+  else if (e.key === "f" || e.key === "F") { ensureContext(); flipBy(1); }
+  else if ((e.key === "ArrowUp" || e.key === "ArrowDown") && document.activeElement === cv) {
+    e.preventDefault();
+    if (!e.repeat && !keyCue) { ensureContext(); keyCue = e.key; startCue(e.key === "ArrowUp" ? 1 : -1); }
+  }
+});
+addEventListener("keyup", e => { if (e.key === keyCue) { keyCue = null; endCue(); } });
+
 function fail(msg) {
   document.getElementById("side-error").textContent = msg;
-  st.playing = false; if (hiss) hiss.gain.setTargetAtTime(0, ac.currentTime, 0.15); kick();
+  st.playing = false; kick();
 }
 function clearError() { document.getElementById("side-error").textContent = ""; }
 function label() {
@@ -535,22 +887,410 @@ function label() {
   });
   clearError();
 }
-
-cv.addEventListener("click", toggle);
-cv.addEventListener("pointerenter", () => { st.hover = true; kick(); });
-cv.addEventListener("pointerleave", () => { st.hover = false; st.pressed = false; kick(); });
-cv.addEventListener("pointerdown", () => { st.pressed = true; kick(); });
-addEventListener("pointerup", () => { st.pressed = false; kick(); });
-document.getElementById("flip").addEventListener("click", flip);
-addEventListener("keydown", e => {
-  if (e.target.tagName === "BUTTON") return;
-  if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
-  else if (e.key === "f" || e.key === "F") flip();
-});
-// an occasional glint across the window while the tape sits idle
-setInterval(() => { if (!document.hidden && !st.playing && st.flipT < 0) { st.glintT = performance.now(); kick(); } }, 9000);
+setInterval(() => { if (!document.hidden && !st.playing && st.flipCommit === null && scrollY < innerHeight) { st.glintT = performance.now(); kick(); } }, 9000);
 addEventListener("resize", fit);
-fit(); label(); compose(performance.now()); drawMeter();
+fit(); label(); compose(performance.now()); drawMeter(0);
+
+// ====================== below the tape: the wood ======================
+// A semantic repainting of a photograph on a 120x160 grid (1 cell = 8x8 px of
+// the 960x1280 original): every region is painted as what it is. Sky, the
+// swaying canopy and the rest of the scene are separate layers; wind, light,
+// air and the deer are animated on top, and only while the wood is on screen.
+(() => {
+const W = 120, H = 160;
+const cv = document.getElementById("forest"), out = cv.getContext("2d");
+cv.width = W; cv.height = H;
+const layer = () => { const c = document.createElement("canvas"); c.width = W; c.height = H; return c; };
+const SKY = layer(), CANOPY = layer(), SCENE = layer();
+let g;
+
+const C = {
+  sky1: "#d9e9f4", sky2: "#a9cbe8",
+  leafD: "#2f3d1d", leaf: "#526327", leafL: "#7d913a", leafS: "#b6b85a",
+  barkD: "#2f261e", bark: "#54453a", barkL: "#80705f", barkS: "#b7a58c",
+  gShadow: "#3e2c1e", gDark: "#5e4430", g: "#86643f", gSun: "#ad8753", gBright: "#cfa86f",
+  yLeaf: "#e2c23e", grass: "#4c7a2a", grassL: "#7ea63e", rock: "#bdb8ac", rockS: "#8e8a80",
+  cap: "#eeeae0", capS: "#bdb7a8", brim: "#17171a", logo: "#c0392b",
+  skin: "#b57c5b", skinS: "#8a5a40", beard: "#271c15",
+  plaid: "#e6e6e4", plaidS: "#bfc0c2", plaidR: "#8f94a8", plaidB: "#5b6a90", plaidX: "#3f4560",
+  jeans: "#b9c6c4", jeansS: "#93a3a3", jeansD: "#677878", jeansL: "#d6dfdc",
+  shoe: "#f0ece4", shoeS: "#c9c3b8", shoeB: "#8a4a2c", sock: "#26283a",
+  pack: "#e8e6de", packS: "#bebbb3", navy: "#1c2144", navyS: "#121530", mesh: "#3a4370",
+  red: "#cc3a2c", blue: "#3558c8", green: "#2e8f3e", yellow: "#e8c43a",
+  bag: "#abc7e4", bagS: "#7f9fc6", bagL: "#d3e3f2", strap: "#24242a",
+  ink: "#1b110b", deer: "#bf7332", deerL: "#e09650", deerD: "#7d421f", stripe: "#5a2e14", rim: "#ffd27a",
+  deerW: "#fbf0dc", earIn: "#f1dcc4", nose: "#0e0805", eye: "#1a0f08", bird: "#2b2620",
+};
+
+// ---------- primitives ----------
+const P = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } };
+const pick = (c, x, y) => (typeof c === "function" ? c(x, y) : c);
+function rng(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const R = rng(1970);
+const hash = (x, y) => { let h = Math.imul(x, 374761393) + Math.imul(y, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+function noise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const s = t => t * t * (3 - 2 * t), u = s(xf), v = s(yf);
+  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+const dith = (x, y, t) => (BAYER[y & 3][x & 3] + 0.5) / 16 < t;
+function rect(x, y, w, h, c) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) P(x + i, y + j, pick(c, x + i, y + j)); }
+function poly(pts, c) {
+  const ys = pts.map(p => p[1]), y0 = Math.floor(Math.min(...ys)), y1 = Math.ceil(Math.max(...ys));
+  for (let y = y0; y <= y1; y++) {
+    const xs = [];
+    for (let i = 0; i < pts.length; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length];
+      if ((ay <= y + 0.5 && by > y + 0.5) || (by <= y + 0.5 && ay > y + 0.5)) xs.push(ax + (y + 0.5 - ay) / (by - ay) * (bx - ax));
+    }
+    xs.sort((a, b) => a - b);
+    for (let k = 0; k + 1 < xs.length; k += 2)
+      for (let x = Math.round(xs[k]); x < Math.round(xs[k + 1]); x++) P(x, y, pick(c, x, y));
+  }
+}
+function ellipse(cx, cy, rx, ry, c, rot = 0) {
+  const cs = Math.cos(rot), sn = Math.sin(rot), m = Math.max(rx, ry) + 1;
+  for (let y = Math.floor(cy - m); y <= cy + m; y++) for (let x = Math.floor(cx - m); x <= cx + m; x++) {
+    const dx = x + 0.5 - cx, dy = y + 0.5 - cy, u = dx * cs + dy * sn, v = -dx * sn + dy * cs;
+    const d = (u * u) / (rx * rx) + (v * v) / (ry * ry);
+    if (d <= 1) P(x, y, typeof c === "function" ? c(x, y, d, u / rx, v / ry) : c);
+  }
+}
+function band(x0, y0, x1, y1, w0, w1, c) {
+  const len = Math.hypot(x1 - x0, y1 - y0) || 1, steps = Math.ceil(len * 2);
+  const nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, cx = x0 + (x1 - x0) * t, cy = y0 + (y1 - y0) * t, w = w0 + (w1 - w0) * t;
+    for (let k = -w / 2; k <= w / 2; k += 0.5) {
+      const s = (k + w / 2) / Math.max(w, 1e-6);
+      P(cx + nx * k, cy + ny * k, typeof c === "function" ? c(Math.round(cx + nx * k), Math.round(cy + ny * k), s, t) : c);
+    }
+  }
+}
+
+// ---------- the static layers ----------
+const groundTop = x => x < 54 ? 74 + noise(x / 6, 3) * 2 : x < 90 ? 74 - (x - 54) * (32 / 36) : 42 - (x - 90) * (11 / 30);
+const WEEDS = [];
+
+function paintSky() {
+  g = SKY.getContext("2d");
+  for (let y = 0; y < 100; y++) for (let x = 0; x < W; x++)
+    P(x, y, dith(x, y, (y / 92 + (120 - x) / 400) * 1.3) ? C.sky2 : C.sky1);
+}
+function paintCanopy() {
+  g = CANOPY.getContext("2d");
+  for (let y = 0; y < 94; y++) for (let x = -3; x < W + 3; x++) {
+    const n = noise(x / 6, y / 6) * 0.55 + noise(x / 2.5, y / 2.5) * 0.45;
+    const thin = (x / W) * 0.3 + (1 - y / 94) * 0.05 - (y > 50 ? (y - 50) / 70 : 0);
+    if (n > 0.36 + thin) {
+      const lit = noise(x / 3 + 40, y / 3) + (x / W) * 0.25 - y / 220 + (n - 0.5) * 0.6;
+      P(x, y, lit > 0.82 ? C.leafS : lit > 0.6 ? C.leafL : lit > 0.36 ? C.leaf : C.leafD);
+    }
+  }
+  for (let i = 0; i < 46; i++) {
+    const x = R() * W, y = R() * 64, l = 4 + R() * 8, a = -Math.PI / 2 + (R() - 0.5) * 1.8;
+    band(x, y, x + Math.cos(a) * l, y + Math.sin(a) * l, 0.5, 0.5, C.bark);
+  }
+}
+function paintScene() {
+  g = SCENE.getContext("2d");
+  for (let i = 0; i < 24; i++) {
+    const x = R() * W, top = R() * 20, lean = (R() - 0.5) * 6;
+    band(x + lean, top, x, groundTop(x) + 2, 0.6, 1.2, (px, py, s) => (s < 0.4 ? C.barkL : C.bark));
+  }
+  for (let x = 0; x < W; x++) for (let y = Math.floor(groundTop(x)); y < H; y++) {
+    const n = noise(x / 4, y / 4) * 0.55 + noise(x / 1.5, y / 1.5) * 0.45;
+    const sun = 0.45 + (x / W) * 0.25 - (y / H) * 0.25 + (n - 0.5) * 0.8;
+    let c = sun > 0.72 ? C.gBright : sun > 0.55 ? C.gSun : sun > 0.35 ? C.g : C.gDark;
+    const stripe = Math.sin((y + (x - 60) * 0.72) / 5.2 + noise(x / 8, y / 8) * 2.5);
+    if (stripe > 0.45) c = stripe > 0.75 ? C.gShadow : C.gDark;
+    P(x, y, c);
+  }
+  poly([[33, 135], [50, 137], [86, 102], [80, 96], [68, 100], [58, 104]], (x, y) => dith(x, y, 0.85) ? C.gShadow : C.gDark);
+  ellipse(96, 106, 13, 2.5, (x, y) => dith(x, y, 0.7) ? C.gShadow : C.gDark);
+  // litter, and a scatter of grey gravel down at the path's edge
+  for (let i = 0; i < 260; i++) {
+    const x = R() * W | 0, y = groundTop(x) + 2 + R() * (H - groundTop(x)) | 0, r = R();
+    if (r < 0.4) { P(x, y, C.yLeaf); if (R() < 0.5) P(x + 1, y, C.yLeaf); }
+    else if (r < 0.6) P(x, y, C.gBright);
+    else if (r < 0.7) { P(x, y, C.rock); P(x + 1, y, C.rock); P(x, y + 1, C.rockS); }
+    else if (r < 0.86) P(x, y, C.gShadow);
+    else P(x, y, C.shoeB);
+  }
+  for (let i = 0; i < 90; i++) { const x = 70 + R() * 50, y = 146 + R() * 14; if (y > 140 + (120 - x) * 0.3) P(x, y, R() < 0.5 ? C.rockS : C.rock); }
+  for (let i = 0; i < 26; i++) WEEDS.push([88 + R() * 32 | 0, 112 + R() * 46 | 0, 3 + R() * 6 | 0]);
+  for (let i = 0; i < 12; i++) WEEDS.push([R() * 30 | 0, 100 + R() * 50 | 0, 2 + R() * 4 | 0]);
+  for (let i = 0; i < 6; i++) WEEDS.push([108 + R() * 12 | 0, 78 + R() * 12 | 0, 3 + R() * 5 | 0]);
+
+  const trunk = (x0, y0, x1, y1, w0, w1) =>
+    band(x0, y0, x1, y1, w0, w1, (x, y, s) => s < 0.22 ? C.barkS : s < 0.5 ? C.barkL : s < 0.85 ? C.bark : C.barkD);
+  trunk(4, 108, 24, -2, 6, 3.5); trunk(-1, 92, 9, -2, 3.5, 2); trunk(14, 104, 19, 30, 2.5, 1.5);
+  trunk(37, 68, 41, -2, 3, 2); trunk(44, 66, 49, 10, 2, 1.2);
+  trunk(55, 110, 61, -2, 3.5, 2.2); trunk(82, 54, 85, -2, 2.2, 1.4); trunk(76, 62, 78, 8, 1.5, 1);
+  trunk(110, 106, 116, -2, 6, 4); trunk(118, 70, 120, -2, 2, 1.5);
+  for (let y = 4; y < 104; y += 3 + (R() * 5 | 0)) { P(6 + (18 * (1 - y / 108)) + R() * 2, y, C.barkD); P(111 + 5 * (1 - y / 108) + R() * 3, y, C.barkD); }
+
+  // the deer up the slope (its head is animated), and a third half behind the big trunk
+  const outlined = (cx, cy, rx, ry, c, rot) => { ellipse(cx, cy, rx + 0.9, ry + 0.9, C.ink, rot); ellipse(cx, cy, rx, ry, c, rot); };
+  for (const dx of [-2, -1, 1, 2]) band(83 + dx, 61, 83 + dx * 1.2, 67, 1, 0.8, C.deerD);
+  outlined(83, 58, 3.6, 5, (x, y, d) => (d > 0.6 ? C.deerD : C.deer));
+  ellipse(83, 61, 2, 1.6, C.deerW); P(83, 60, C.ink);
+  outlined(112, 22, 7, 4, (x, y) => (y < 20 ? C.deerL : C.deer));
+  band(106, 23, 104, 32, 1.2, 1, C.deerD); band(109, 25, 109, 33, 1.2, 1, C.deerD);
+  trunk(110, 40, 113, 8, 4.2, 4);
+  paintMan();
+}
+
+// the check shirt as a woven 5x5 tile, in the garment's own coordinates
+function plaidAt(u, v) {
+  const a = ((u % 5) + 5) % 5 === 0, b = ((v % 5) + 5) % 5 === 0;
+  if (a && b) return C.plaidX;
+  if (a) return C.plaidR;
+  if (b) return C.plaidB;
+  return ((v % 5) + 5) % 5 === 2 && (((u + v) % 2) + 2) % 2 ? C.plaidS : C.plaid;
+}
+// the quilted pack: an 8x4 tile of mesh-textured navy triangles; the stripes
+// follow the triangles' right edges (local x + row = 6 mod 8), as on the pack
+const PO = [17, 63];
+function packAt(x, y) {
+  const lx = x - PO[0], row = y - PO[1], b = row >> 2, r = row & 3;
+  const m = (((lx + (b & 1) * 4) % 8) + 8) % 8, k = lx + row;
+  for (const [s, c] of [[22, C.yellow], [30, C.red], [38, C.blue], [46, C.green], [54, C.yellow]])
+    if (k === s || k === s + 1) return c;
+  const tri = m >= r && m <= 6 - r, shade = lx < 3 || row > 31;
+  if (tri) return shade ? C.navyS : (m + r) % 3 === 1 && r < 2 ? C.mesh : C.navy;
+  return shade || r === 3 ? C.packS : C.pack;
+}
+function paintMan() {
+  poly([[30, 93], [48, 90], [50, 125], [39, 128], [30, 127]], (x, y) => {
+    if (x === 38 && y > 99) return C.jeansD;
+    if ((x === 33 && y > 104 && y < 120) || (x === 44 && y > 96 && y < 118) || x >= 48) return C.jeansS;
+    if ((x === 31 || x === 41) && y > 100) return C.jeansL;
+    if (y > 92 && y < 99 && x > 31 && x < 37) return y === 93 || x === 32 || x === 36 ? C.jeansS : C.jeans;
+    return C.jeans;
+  });
+  rect(30, 122, 9, 4, (x, y) => (y === 122 ? C.jeansL : y === 125 ? C.jeansD : C.jeans));
+  rect(39, 120, 11, 4, (x, y) => (y === 120 ? C.jeansL : y === 123 ? C.jeansD : C.jeans));
+  rect(32, 126, 5, 3, C.sock); rect(41, 124, 6, 4, C.sock);
+  poly([[29, 129], [37, 128], [39, 133], [29, 134]], (x, y) => y > 132 ? C.shoeB : x < 31 ? C.shoeS : C.shoe);
+  poly([[38, 128], [47, 127], [52, 133], [51, 136], [38, 135]], (x, y) => y > 133 ? C.shoeB : y < 129 ? C.shoeS : C.shoe);
+  for (const x of [41, 43, 45]) P(x, 129, C.ink);                // laces
+  P(33, 130, C.ink); P(35, 130, C.ink);
+  poly([[36, 66], [50, 63], [53, 75], [49, 93], [35, 95]], (x, y) => (x > 50 ? C.plaidS : plaidAt(x, y)));
+  const ax0 = 48, ay0 = 69, ax1 = 70, ay1 = 87, al = Math.hypot(ax1 - ax0, ay1 - ay0);
+  band(ax0, ay0, ax1, ay1, 6, 3.4, (x, y, s) => {
+    const u = Math.round(((x - ax0) * (ax1 - ax0) + (y - ay0) * (ay1 - ay0)) / al);
+    const v = Math.round(((x - ax0) * -(ay1 - ay0) + (y - ay0) * (ax1 - ax0)) / al);
+    return s > 0.82 ? C.plaidS : plaidAt(u, v);
+  });
+  rect(69, 85, 2, 4, C.strap); P(70, 86, C.green);
+  ellipse(73.5, 88, 3, 1.8, C.skin); P(72, 89, C.skinS); P(76, 89, C.skin);
+  band(45, 66, 40, 96, 1.2, 1.2, C.strap);
+  poly([[41, 78], [47, 77], [48, 87], [42, 88]], (x, y) => (x === 42 || y === 78 ? "#3c3c48" : C.strap));
+  poly([[31, 60], [46, 57], [52, 65], [45, 72], [33, 69]], (x, y) =>
+    y < 60 || (x < 34 && y < 64) ? C.bagL : (x + y) % 7 === 0 ? C.bagS : y > 68 || x > 48 ? C.bagS : C.bag);
+  poly([[18, 66], [39, 63], [42, 93], [24, 99], [17, 90]], packAt);
+  band(17, 66, 17, 93, 1, 1, C.ink);
+  poly([[17, 89], [24, 95], [31, 97], [24, 100], [17, 94]], (x, y) => (y > 97 ? C.packS : (x + y) % 3 ? C.pack : C.packS));
+  // head in profile, dark beard; a white cap with a black underbrim and a wing badge
+  ellipse(55, 61, 3.2, 3.8, C.skin);
+  poly([[53, 61], [58, 60], [59, 64], [56, 67], [52, 65]], C.beard);
+  P(57, 59, C.skin); P(58, 59, C.skinS); P(53, 60, C.skinS);
+  ellipse(53, 56.5, 5.5, 3.6, (x, y) => (y > 57 ? C.capS : C.cap));
+  poly([[56, 57], [63, 57.5], [62, 60], [56, 59.5]], (x, y) => (y >= 59 ? C.brim : C.cap));
+  P(51, 55, C.ink); P(52, 55, C.logo); P(53, 55, C.ink);
+}
+
+// ---------- the moving parts ----------
+function weeds(t, w) {
+  for (const [x, y, h] of WEEDS) for (let k = 0; k < h; k++) {
+    const sway = Math.round(w * 1.4 * (k / h) + Math.sin(t / 380 + x) * 0.5 * (k / h));
+    const sx = x + Math.round(Math.sin(k * 0.9 + x) * 1.2) + sway;
+    P(sx, y - k, k % 3 ? C.grass : C.grassL);
+    if (k % 2 && hash(x, k) < 0.7) { P(sx - 1, y - k, C.grassL); P(sx + 1, y - k + 1, C.grass); }
+  }
+}
+function backDeerHead(t) {
+  const up = (t % 9000) > 7000;
+  const hy = up ? 49.5 : 52.5;
+  ellipse(84, hy, 2.9, 3.1, C.ink); ellipse(84, hy, 2, 2.2, up ? C.deer : C.deerD);
+  P(82, hy - 3, C.ink); P(82, hy - 4, C.deerD); P(86, hy - 3, C.ink); P(86, hy - 4, C.deerD);
+  if (up) { P(83, hy, C.eye); P(85, hy, C.eye); P(84, hy + 1, C.nose); }
+}
+const SPOTS = [[87, 75], [90, 74], [93, 73], [96, 72], [99, 72], [102, 72], [89, 77], [92, 76], [95, 75], [98, 75], [101, 75], [104, 74], [94, 78], [97, 78], [100, 78]];
+let alertUntil = 0;
+function fawn(t) {
+  const alert = t < alertUntil || (t % 12000) < 1500;
+  const hy = alert ? -3 : ((t / 650) | 0) % 5 === 0 ? 1 : 0;   // bobbing while eating, up when alert
+  const blink = (t % 5200) < 140, twitch = !alert && (t % 3700) < 220, flick = (t % 2900) < 260;
+  const chew = !alert && ((t / 260) | 0) % 2;
+  const leg = (x0, y0, x1, y1, lit) => {
+    band(x0, y0, x1, y1, 3, 2.4, C.ink);
+    band(x0, y0, x1, y1, 1.6, 1.2, (x, y, s, tt) => (tt > 0.92 ? C.nose : s < 0.5 && lit ? C.deerL : C.deerD));
+  };
+  leg(104, 80, 107, 97, false); leg(101, 81, 103, 104, false);
+  leg(89, 84, 89, 106, true); leg(86, 83, 85, 104, true);
+  ellipse(95, 78.5, 13, 7.2, C.ink, -0.18);
+  ellipse(95, 78.5, 12, 6.3, (x, y, d, u, v) => {
+    if (v < -0.72 && u < 0.6) return C.rim;
+    if (v < -0.5 && v > -0.72 && u > -0.85) return C.stripe;     // the dark line down the spine
+    if (v > 0.55) return d > 0.8 ? C.deerD : C.deer;
+    if (v > 0.25 && u > -0.6) return C.deerW;
+    return v < -0.3 ? C.deerL : C.deer;
+  }, -0.18);
+  for (const [x, y] of SPOTS) P(x, y, C.deerW);
+  P(108, 73, C.ink); P(108, 74, flick ? C.deerW : C.ink); P(109, flick ? 72 : 75, flick ? C.deerW : C.deerD);
+  band(87, 77, 82, 85 + hy, 6.5, 5.5, C.ink);
+  band(87, 77, 82, 85 + hy, 5, 4, (x, y, s) => (s < 0.25 ? C.rim : s > 0.75 ? C.deerW : C.deer));
+  // ears: large, dark-rimmed, pale inside; one twitches back, both prick up when alert
+  const ear = (o, i) => { poly(o, C.ink); poly(i, C.earIn); };
+  const Y = p => p.map(([x, y]) => [x, y + hy]);
+  ear(Y([[78, 85], [72, 78], [76, 77], [81, 83]]), Y([[78, 84], [74, 79], [76, 79], [79, 83]]));
+  if (twitch) ear(Y([[84, 84], [90, 81], [91, 83], [85, 86]]), Y([[85, 84], [89, 82], [90, 83], [86, 85]]));
+  else ear(Y([[83, 84], [86, 76], [89, 77], [86, 85]]), Y([[84, 83], [86, 78], [87, 78], [86, 84]]));
+  ellipse(80.5, 87 + hy, 4.3, 3.6, C.ink, 0.4);
+  ellipse(80.5, 87 + hy, 3.5, 2.9, (x, y, d, u, v) => (v < -0.5 ? C.rim : C.deer), 0.4);
+  ellipse(77.8, 89 + hy, 2.2, 1.6, C.deerL);
+  P(80, 89 + hy, C.deerW); P(81, 90 + hy, C.deerW);
+  if (blink) { P(80, 86 + hy, C.ink); P(81, 86 + hy, C.ink); }
+  else { for (const [x, y] of [[80, 85], [81, 85], [80, 86], [81, 86]]) P(x, y + hy, C.eye); P(80, 85 + hy, "#ffffff"); }
+  P(75, 89 + hy + chew, C.nose); P(76, 89 + hy, C.nose); P(76, 90 + hy, C.nose);
+}
+function bird(t) {
+  const n = (t / 14000) | 0, p = (t % 14000) / 6000;
+  if (p > 1) return;
+  const dir = n % 2 ? -1 : 1, x = dir > 0 ? -4 + p * 128 : 124 - p * 128, y = 10 + (n % 3) * 7 + Math.sin(t / 420) * 2;
+  const up = ((t / 140) | 0) % 2;
+  P(x, y, C.bird); P(x - 1, y - up, C.bird); P(x + 1, y - up, C.bird);
+  if (!up) { P(x - 2, y + 1, C.bird); P(x + 2, y + 1, C.bird); }
+}
+
+// ---------- light and air ----------
+const MOTES = Array.from({ length: 52 }, () => ({ x: R() * W, y: 20 + R() * 130, vx: 0, vy: 0, ph: R() * 6.28 }));
+const PUFF = [];
+const LEAVES = Array.from({ length: 4 }, (_, i) => ({ x: R() * W, y: -R() * 160, ph: R() * 6.28, sp: 5 + R() * 4, c: i % 2 ? C.yLeaf : C.gBright, loop: true }));
+let pointer = null, glintSites = [], rowDx = new Int8Array(H);
+
+function wind(t) {
+  const gust = Math.pow(Math.max(0, Math.sin(t / 7000)), 8) * 1.3;
+  return 0.55 * Math.sin(t / 2600) + 0.3 * Math.sin(t / 1100 + 1) + gust;
+}
+function findGlints() {
+  const d = CANOPY.getContext("2d").getImageData(0, 0, W, 94).data, s = [];
+  const solid = (x, y) => d[(y * W + x) * 4 + 3] > 0;
+  for (let y = 1; y < 93; y++) for (let x = 1; x < W - 1; x++)
+    if (solid(x, y) && (!solid(x + 1, y) || !solid(x, y - 1))) s.push([x, y]);
+  return s;
+}
+
+let raf = 0, last = 0, tsAcc = 0, visible = false;
+function frame(t) {
+  const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+  const w = wind(t);
+  g = out;
+  out.clearRect(0, 0, W, H);
+  out.drawImage(SKY, 0, 0);
+  // the canopy sways: rows shift with the wind, the crown more than the base
+  for (let y = 0; y < 94; y++) {
+    rowDx[y] = Math.round(w * 2.2 * (1 - y / 94) + Math.sin(t / 400 + y / 7) * 0.45 * Math.abs(w));
+    out.drawImage(CANOPY, 0, y, W, 1, rowDx[y], y, W, 1);
+  }
+  out.drawImage(SCENE, 0, 0);
+  weeds(t, w); backDeerHead(t); fawn(t); bird(t);
+
+  // dappled light (faster in a gust), plus the dissolve that brings the wood in on scroll
+  tsAcc += dt * (1 + Math.abs(w) * 1.5);
+  const ts = Math.floor(tsAcc * 8) / 8;
+  const rc = cv.getBoundingClientRect();
+  const reveal = Math.max(0, Math.min(1, (innerHeight - rc.top) / (rc.height * 0.75)));
+  const img = out.getImageData(0, 0, W, H), d = img.data;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4;
+    if (reveal < 1 && (BAYER[(y >> 1) & 3][(x >> 1) & 3] + 0.5) / 16 > reveal) { d[i] = 26; d[i + 1] = 20; d[i + 2] = 14; continue; }
+    if (y < 50 || y < groundTop(x) - 18 || d[i + 2] > d[i] + 20) continue;
+    const n = noise(x / 5 + ts * 0.35, y / 4 - ts * 0.12) * 0.6 + noise(x / 2.2 - ts * 0.5, y / 2.2) * 0.4;
+    if (n > 0.66) {
+      const k = n > 0.74 ? 0.38 : 0.2;
+      d[i] += (255 - d[i]) * k; d[i + 1] += (236 - d[i + 1]) * k; d[i + 2] += (180 - d[i + 2]) * k * 0.6;
+    } else if (n < 0.22) { d[i] *= 0.82; d[i + 1] *= 0.8; d[i + 2] *= 0.84; }
+  }
+  out.putImageData(img, 0, 0);
+  if (reveal > 0.95) air(t, dt, w);
+  raf = visible ? requestAnimationFrame(frame) : 0;
+  if (!raf) last = 0;
+}
+function air(t, dt, w) {
+  for (let k = 0; k < 7; k++) {                                  // sun winking through the leaves
+    const [x, y] = glintSites[(hash(k, Math.floor(t / 180)) * glintSites.length) | 0];
+    const sx = x + rowDx[y];
+    P(sx, y, "#fff6d6"); if (k < 2) { P(sx - 1, y, "#f2e2a0"); P(sx, y + 1, "#f2e2a0"); }
+  }
+  for (const m of MOTES) {                                        // motes ride the wind and shy from the pointer
+    const tvx = w * 5 + Math.sin(t / 1700 + m.ph) * 2, tvy = -1.5 + Math.sin(t / 1300 + m.ph * 2) * 1.5;
+    const k = Math.min(1, dt * 1.5);
+    m.vx += (tvx - m.vx) * k; m.vy += (tvy - m.vy) * k;
+    if (pointer) {
+      const dx = m.x - pointer.x, dy = m.y - pointer.y, dd = Math.hypot(dx, dy) || 1;
+      if (dd < 16) { const f = (1 - dd / 16) * 160 * dt; m.vx += dx / dd * f; m.vy += dy / dd * f; }
+    }
+    m.x += m.vx * dt; m.y += m.vy * dt;
+    if (m.x < 0) m.x += W; if (m.x >= W) m.x -= W;
+    if (m.y < 16) m.y = 150; if (m.y > 156) m.y = 20;
+    const a = 0.5 + 0.5 * Math.sin(t / 600 + m.ph * 3);
+    if (a > 0.45) { g.globalAlpha = a; P(m.x, m.y, "#fff4c8"); g.globalAlpha = 1; }
+  }
+  for (let k = PUFF.length - 1; k >= 0; k--) {                   // dust kicked up by a tap
+    const p = PUFF[k];
+    p.vy += 40 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    if (p.life <= 0) { PUFF.splice(k, 1); continue; }
+    g.globalAlpha = Math.min(1, p.life * 2); P(p.x, p.y, p.c); g.globalAlpha = 1;
+  }
+  for (let k = LEAVES.length - 1; k >= 0; k--) {                 // leaves spinning down
+    const l = LEAVES[k];
+    l.y += l.sp * dt; l.x += (w * 6 + Math.sin(t / 700 + l.ph) * 4) * dt;
+    if (l.y > 175) { if (l.loop) { l.y = -10; l.x = R() * W; } else { LEAVES.splice(k, 1); continue; } }
+    const x = ((l.x % W) + W) % W, flat = Math.sin(t / 300 + l.ph) > 0;
+    P(x, l.y, l.c); if (flat) P(x + 1, l.y, l.c); else P(x, l.y + 1, C.gSun);
+  }
+}
+
+// ---------- touching the wood ----------
+const toScene = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
+cv.addEventListener("pointermove", e => { pointer = toScene(e); });
+cv.addEventListener("pointerleave", () => { pointer = null; });
+cv.addEventListener("pointerdown", e => {
+  const p = toScene(e), t = performance.now();
+  if (p.x > 72 && p.x < 112 && p.y > 70 && p.y < 108) { alertUntil = t + 1800; return; }   // the fawn looks up
+  if (p.y < groundTop(p.x) - 6) {                                  // a branch is shaken: leaves come down
+    for (let k = 0; k < 4; k++) LEAVES.push({ x: p.x + (R() - 0.5) * 8, y: p.y + (R() - 0.5) * 4, ph: R() * 6.28, sp: 6 + R() * 6, c: k % 2 ? C.yLeaf : C.leafL, loop: false });
+    return;
+  }
+  for (let k = 0; k < 9; k++)                                     // a puff of dust
+    PUFF.push({ x: p.x, y: p.y, vx: (R() - 0.5) * 30, vy: -10 - R() * 25, life: 0.5 + R() * 0.5, c: k % 3 ? C.gBright : "#fff4c8" });
+  for (const m of MOTES) { const dx = m.x - p.x, dy = m.y - p.y, dd = Math.hypot(dx, dy) || 1; if (dd < 22) { m.vx += dx / dd * 30; m.vy += dy / dd * 30; } }
+});
+
+function fit() {
+  const k = Math.max(1, Math.floor(Math.min(innerWidth * 0.94 / W, innerHeight * 0.86 / H)));
+  cv.style.width = W * k + "px"; cv.style.height = H * k + "px";
+}
+paintSky(); paintCanopy(); paintScene();
+glintSites = findGlints();
+fit(); addEventListener("resize", fit);
+new IntersectionObserver(([en]) => {
+  visible = en.isIntersecting;
+  if (visible && !raf) raf = requestAnimationFrame(frame);
+}).observe(cv);
+})();
 </script>
 </body>
 </html>
