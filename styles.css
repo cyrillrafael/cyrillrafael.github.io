@@ -1,3 +1,21 @@
+/* One type scale, ratio 1.2 (minor third), which the desktop sizes already
+   approximated: base 18.4px, caption title = base/1.2 (15.3px),
+   year/dimensions = base/1.44 (12.8px), nav = 2rem (~base*1.2^3). The nav
+   used to drop to 12px at the 768px breakpoint -- smaller than the captions
+   it navigates; it now slides continuously from caption-title size at a
+   375px phone (15.3px) up to 2rem at 1024px+, so no width inverts the
+   hierarchy. Grays are warmed toward the wall's own hue (~40deg) so ink and
+   loading placeholders sit in the same light as the photographed backdrop. */
+:root {
+  --fs-base: 1.15rem;
+  --fs-small: calc(var(--fs-base) / 1.2);
+  --fs-smaller: calc(var(--fs-base) / 1.44);
+  --fs-nav: clamp(0.958rem, 0.356rem + 2.569vw, 2rem);
+  --ink: #1d1b18;
+  --shimmer-light: #e9e7e2;
+  --shimmer-dark: #e1ded8;
+}
+
 html, body {
   min-height: 100vh;
   margin: 0;
@@ -29,7 +47,7 @@ body {
   padding: 1em 0;
   margin: 0;
   font-family: 'Menlo', 'Courier New', monospace;
-  font-size: 2rem; /* Slightly smaller */
+  font-size: var(--fs-nav);
   background-color: rgba(255, 255, 255, 0);
   flex-wrap: wrap;
   gap: 1em; /* Add consistent spacing between items */
@@ -43,7 +61,15 @@ body {
   padding: 2em;
   max-width: 600px;
   margin: 0 auto;
-  font-size: 1.15rem;
+  font-size: var(--fs-base);
+}
+
+/* Code blocks (e.g. the webshop templates) otherwise fall back to the
+   browser's own monospace at ~13px; keep them in the site's Menlo. */
+pre,
+code {
+  font-family: inherit;
+  font-size: inherit;
 }
 
 /* Mobile-first: clean vertical ribbon layout for iPhones */
@@ -74,14 +100,6 @@ body {
     padding: 0 1em;
     margin-top: 0.5em;
     margin-bottom: 2em;
-  }
-
-  .painting-info .title {
-    font-size: 0.85rem;
-  }
-
-  .painting-info .meta-row {
-    font-size: 0.72rem;
   }
 
   /* Reduce gallery gap on mobile */
@@ -127,9 +145,9 @@ body {
   aspect-ratio: 1 / 1;
   background: linear-gradient(
     90deg,
-    #f0f0f0 25%,
-    #e8e8e8 50%,
-    #f0f0f0 75%
+    var(--shimmer-light) 25%,
+    var(--shimmer-dark) 50%,
+    var(--shimmer-light) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -161,7 +179,7 @@ body {
 }
 
 .painting-info .title {
-  font-size: 0.95rem;
+  font-size: var(--fs-small);
   text-align: center;
 }
 
@@ -169,7 +187,7 @@ body {
   display: flex;
   justify-content: space-between;
   margin-top: 0.3em;
-  font-size: 0.8rem;
+  font-size: var(--fs-smaller);
 }
 
 .painting img {
@@ -200,9 +218,9 @@ body {
   aspect-ratio: 16 / 10;
   background: linear-gradient(
     90deg,
-    #f0f0f0 25%,
-    #e8e8e8 50%,
-    #f0f0f0 75%
+    var(--shimmer-light) 25%,
+    var(--shimmer-dark) 50%,
+    var(--shimmer-light) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -219,14 +237,14 @@ body {
 }
 
 .title {
-  color: #1a1a1a;
+  color: var(--ink);
   font-weight: bold;
   display: block;
 }
 
 .dimensions,
 .year {
-  color: #1a1a1a;
+  color: var(--ink);
   font-weight: bold;
   opacity: 1;
 }
@@ -279,7 +297,6 @@ ul {
 /* Mobile navbar: compact, wrap if needed */
 @media (max-width: 768px) {
   .horizontal-list {
-    font-size: 0.75rem;
     padding: 0.5em 0.5em;
     gap: 0.4em 0.6em;
     flex-wrap: wrap;
@@ -289,10 +306,6 @@ ul {
   .nav-item a {
     display: inline;
     white-space: nowrap;
-  }
-
-  .nav-item i {
-    font-size: 1em;
   }
 }
 
