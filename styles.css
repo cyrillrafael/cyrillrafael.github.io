@@ -231,6 +231,12 @@ body {
   opacity: 1;
 }
 
+/* Top funding opportunities on the resources page: one step above body text */
+.featured-grant {
+  font-size: 1.3rem;
+  margin: 0.6em 0;
+}
+
 .about-page {
  display: inline;
  padding: 0.8ex;
