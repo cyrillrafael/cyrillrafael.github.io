@@ -1,7 +1,10 @@
 ---
 layout: text
 title: Artist Resources
-permalink: /webshop/
+permalink: /resources/
+redirect_from: /webshop/
+scripts:
+  - /assets/js/resources.js
 ---
 
 # Artist Resources & Grant Preparation
@@ -175,9 +178,15 @@ Basic and Project cannot fund the same costs — choose one per plan.
 
 ### Artist Statement (Short)
 
+<div class="copy-inset" markdown="1">
+
 > Cyrill Rafael Vasilyev (b. 1992, Moscow) creates large-scale painterly installations characterised by vibrant colour and tactile materiality. His practice addresses themes of cyclicity, embodiment, and the dream-like nature of human experience, drawing on contemplative traditions to evoke ephemeral realms at the edges of perception. Working primarily with large surfaces that function as both bodies and spaces, he emphasises the character of materials to celebrate the revelatory potential of vision.
 
+</div>
+
 ### Project Description Template
+
+<div class="copy-inset" markdown="1">
 
 ```
 TITLE:
@@ -204,7 +213,11 @@ BUDGET:
 - TOTAL: €
 ```
 
+</div>
+
 ### CV Format for Applications
+
+<div class="copy-inset" markdown="1">
 
 ```
 CYRILL RAFAEL VASILYEV
@@ -229,6 +242,8 @@ RESIDENCIES
 COLLECTIONS / AWARDS / PUBLICATIONS
 [as applicable]
 ```
+
+</div>
 
 ---
 

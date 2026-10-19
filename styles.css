@@ -237,6 +237,61 @@ body {
   margin: 0.6em 0;
 }
 
+/* Copyable templates: an inset panel with a copy glyph in the top-right corner */
+.copy-inset {
+  position: relative;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 0.8em 2.6em 0.8em 1em;
+  margin: 1em 0;
+}
+
+.copy-inset pre,
+.copy-inset blockquote {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.copy-button {
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  background: none;
+  border: none;
+  padding: 0.3em;
+  font-size: 1rem;
+  color: #1a1a1a;
+  opacity: 0.45;
+  cursor: pointer;
+}
+
+.copy-button:hover,
+.copy-button:focus-visible {
+  opacity: 1;
+}
+
+/* Section links: a quiet "#" that appears on hover */
+.heading-anchor {
+  margin-left: 0.35em;
+  font-weight: normal;
+  opacity: 0;
+  color: inherit;
+}
+
+h2:hover .heading-anchor,
+h3:hover .heading-anchor,
+.heading-anchor:focus {
+  opacity: 0.4;
+}
+
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 0.3;
+  }
+}
+
 .about-page {
  display: inline;
  padding: 0.8ex;

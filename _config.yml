@@ -8,6 +8,9 @@ repository: "uprootiny/uprootiny.github.io"
 # Permalinks
 permalink: "/:title/"
 
+plugins:
+  - jekyll-redirect-from
+
 # Navigation links (artwork first, then info, then contact)
 nav_links:
   - title: "Paintings"
