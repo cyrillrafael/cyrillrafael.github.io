@@ -248,6 +248,102 @@ No open call confirmed as of 20 October 2026. Several Georgian and Armenian site
 
 ---
 
+## Publications & Discourse
+
+Magazines, interview series and books relevant to large-scale painting, colour, perception and printmaking. Links checked 20 October 2026; books matched against the Open Library catalogue.
+
+### Painting and Interviews
+
+| Publication | Focus | Link |
+|-------------|-------|------|
+| Turps Banana | Painter-run magazine on painting; long interviews with painters | [turpsbanana.com](https://turpsbanana.com/) |
+| Studio International | Long-form artist interviews, video interviews | [studiointernational.com](https://www.studiointernational.com/) |
+| The Brooklyn Rail | Artist interviews, reviews, criticism | [brooklynrail.org](https://brooklynrail.org/) |
+| BOMB | Artist-to-artist conversations | [bombmagazine.org](https://bombmagazine.org/) |
+| Two Coats of Paint | Painting reviews and studio visits | [twocoatsofpaint.com](https://twocoatsofpaint.com/) |
+| Painters' Table | Aggregator of writing on painting | [painters-table.com](https://www.painters-table.com/) |
+| Jackson's Art Blog | Artist interviews; *Permeable Worlds* (2026) | [jacksonsart.com/blog](https://www.jacksonsart.com/blog/) |
+
+### Contemporary Art Magazines
+
+| Publication | Base | Link |
+|-------------|------|------|
+| frieze | London / Berlin / New York | [frieze.com](https://www.frieze.com/) |
+| ArtReview | London | [artreview.com](https://artreview.com/) |
+| Spike | Berlin / Vienna | [spikeartmagazine.com](https://www.spikeartmagazine.com/) |
+| Mousse | Milan | [moussemagazine.it](https://www.moussemagazine.it/) |
+| Flash Art | Milan | [flash---art.com](https://flash---art.com/) |
+| Texte zur Kunst | Berlin | [textezurkunst.de](https://www.textezurkunst.de/) |
+| Kunstforum International | Germany | [kunstforum.de](https://www.kunstforum.de/) |
+| e-flux journal | New York | [e-flux.com/journal](https://www.e-flux.com/journal/) |
+| Hyperallergic | New York | [hyperallergic.com](https://hyperallergic.com/) |
+| Elephant | London | [elephant.art](https://elephant.art/) |
+
+### Netherlands and Asia
+
+| Publication | Base | Link |
+|-------------|------|------|
+| Metropolis M | Utrecht | [metropolism.com](https://www.metropolism.com/) |
+| Mister Motley | Amsterdam | [mistermotley.nl](https://www.mistermotley.nl/) |
+| Kunstbeeld | Netherlands | [kunstbeeld.nl](https://www.kunstbeeld.nl/) |
+| ArtAsiaPacific | Hong Kong | [artasiapacific.com](https://artasiapacific.com/) |
+| Ocula Magazine | Asia-Pacific / international | [ocula.com/magazine](https://ocula.com/magazine/) |
+
+### Printmaking
+
+| Publication | Focus | Link |
+|-------------|-------|------|
+| Art in Print | Prints and printmaking, criticism | [artinprint.org](https://artinprint.org/) |
+| Print Quarterly | History of prints | [printquarterly.com](https://www.printquarterly.com/) |
+
+### Juried Print Publications
+
+| Publication | Format | Link |
+|-------------|--------|------|
+| Friend of the Artist | Juried book of contemporary painting; submission fee; Volume 18 call announced | [friendoftheartist.com](https://www.friendoftheartist.com/) |
+| Create! Magazine | Juried issues; submission fee | [createmagazine.com](https://www.createmagazine.com/) |
+
+### Books
+
+| Theme | Author | Title | Year |
+|-------|--------|-------|------|
+| Colour | Josef Albers | *Interaction of Color* | 1963 |
+| Colour | David Batchelor | *Chromophobia* | 2000 |
+| Colour | Johann Wolfgang von Goethe | *Theory of Colours* | 1810 |
+| Colour, pigment | Victoria Finlay | *Colour: Travels Through the Paintbox* | 2002 |
+| Colour, the spiritual | Wassily Kandinsky | *Concerning the Spiritual in Art* | 1911 |
+| Perception | Maurice Merleau-Ponty | "Eye and Mind", in *The Primacy of Perception* | 1961 |
+| Perception | Lawrence Weschler | *Seeing Is Forgetting the Name of the Thing One Sees* (on Robert Irwin) | 1982 |
+| Perception | John Berger | *Ways of Seeing* | 1972 |
+| Embodiment, space | Juhani Pallasmaa | *The Eyes of the Skin* | 1996 |
+| Space, dream | Gaston Bachelard | *The Poetics of Space* | 1958 |
+| Material, dream | Gaston Bachelard | *Water and Dreams* | 1942 |
+| Light, surface | Jun'ichirō Tanizaki | *In Praise of Shadows* | 1933 |
+| Cyclicity | Mircea Eliade | *The Myth of the Eternal Return* | 1949 |
+| Series, time | George Kubler | *The Shape of Time* | 1962 |
+| Reverse perspective | Pavel Florensky | *Iconostasis*; "Reverse Perspective", in *Beyond Vision* | 1920–22 |
+| Asemic writing | Peter Schwenger | *Asemic: The Art of Writing* | 2019 |
+| Natural images | Roger Caillois | *The Writing of Stones* | 1970 |
+| Painting, theory | Isabelle Graw, Daniel Birnbaum, Nikolaus Hirsch (eds.) | *Thinking through Painting* | 2012 |
+| Painting, theory | Isabelle Graw, Ewa Lajer-Burcharth (eds.) | *Painting beyond Itself* | 2016 |
+| Painters' writings | Agnes Martin | *Writings* | 1992 |
+| Painters' writings | Mark Rothko | *The Artist's Reality* | 2004 |
+| Linocut | Nick Morley | *Linocut for Artists and Designers* | 2016 |
+| Relief printing | Ann Westley | *Relief Printmaking* | 2001 |
+
+### Related Practices
+
+| Artist | Connection | Reference |
+|--------|------------|-----------|
+| Katharina Grosse | Painting at architectural scale; painted environments | Monographs; Studio International interviews |
+| Sam Gilliam | Unstretched, draped canvases | Jonathan Binstock, *Sam Gilliam: A Retrospective* (2005) |
+| Ernesto Neto | Immersive, body-scaled textile environments | Monographs |
+| Hilma af Klint | Cyclical series; painting and the spiritual | *Hilma af Klint: Paintings for the Future* (Guggenheim, 2018) |
+| Agnes Martin | Contemplative abstraction | *Writings* |
+| Robert Irwin | Perception and its thresholds | Weschler (above) |
+
+---
+
 ## Work by Context
 
 ### Residencies
