@@ -311,13 +311,16 @@ html.prism-swiss .painted-background .content { background: transparent; }
 
 /* ---------- Quieter navigation for the layout restyles ---------- */
 
-html.prism-wall .horizontal-list,
-html.prism-scale .horizontal-list,
-html.prism-slow .horizontal-list,
-html.prism-index .horizontal-list {
-  font-size: 1rem;
-  gap: 1.6em;
-  padding: 1em 0;
+/* Desktop only: below 769px the site's own compact mobile nav already applies. */
+@media (min-width: 769px) {
+  html.prism-wall .horizontal-list,
+  html.prism-scale .horizontal-list,
+  html.prism-slow .horizontal-list,
+  html.prism-index .horizontal-list {
+    font-size: 1rem;
+    gap: 1.6em;
+    padding: 1em 0;
+  }
 }
 
 /* ---------- Scale reference (shared by Long wall and True scale) ---------- */
