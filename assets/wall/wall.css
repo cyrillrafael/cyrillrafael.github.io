@@ -41,7 +41,8 @@ body.wall .gallery {
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
-  padding: 0 45vw 0 calc(50 * var(--cm) + 10vw);
+  /* Half a screen at each end so the first and last works can be centred */
+  padding: 0 50vw;
   scrollbar-width: thin;
   outline: none;
 }

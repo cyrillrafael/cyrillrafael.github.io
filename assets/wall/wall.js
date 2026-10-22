@@ -6,11 +6,21 @@
   if (!wall) return;
   var works = Array.prototype.slice.call(wall.querySelectorAll('.painting'));
   var count = document.querySelector('.wall-count');
-  var tallest = 175; // the figure must fit too
+  var heights = []; // current height in cm of each work
+
+  // Fit the scale to the works as they are: the 90th-percentile height (or the 175 cm
+  // figure, whichever is taller) fills ~72% of the wall. A rare outlier — one listed
+  // work is 500 cm — may run past the wall rather than shrink every other work.
+  function fit() {
+    var hs = heights.filter(Boolean).slice().sort(function (x, y) { return x - y; });
+    var p90 = hs.length ? hs[Math.floor((hs.length - 1) * 0.9)] : 220;
+    var px = (wall.clientHeight * 0.72) / Math.max(175, p90);
+    document.documentElement.style.setProperty('--cm', px.toFixed(3) + 'px');
+  }
 
   // Dimensions are written height × width ("220x120cm"). The photo's proportions
-  // correct the rare entry written the other way round once the image has loaded.
-  works.forEach(function (p) {
+  // correct an entry written the other way round once the image has loaded.
+  works.forEach(function (p, i) {
     var dims = p.querySelector('.dimensions');
     var img = p.querySelector('img');
     var m = dims && dims.textContent.match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/);
@@ -20,22 +30,18 @@
     var apply = function (h, w) {
       p.style.setProperty('--h-cm', h);
       p.style.setProperty('--w-cm', w);
+      heights[i] = h;
     };
     apply(a, b);
-    tallest = Math.max(tallest, a, b);
     var check = function () {
       if (!img.naturalWidth) return;
       var r = img.naturalWidth / img.naturalHeight;
-      if (Math.abs(b / a - r) > Math.abs(a / b - r)) apply(b, a);
+      // Height a, width b predicts r ≈ b/a; a ratio closer to a/b means the entry is width × height.
+      if (Math.abs(a / b - r) < Math.abs(b / a - r)) { apply(b, a); fit(); }
     };
     if (img) { if (img.complete) check(); else img.addEventListener('load', check, { once: true }); }
   });
 
-  // Fit: the tallest thing on the wall fills ~72% of the wall's height, leaving room for labels.
-  function fit() {
-    var px = (wall.clientHeight * 0.72) / tallest;
-    document.documentElement.style.setProperty('--cm', px.toFixed(3) + 'px');
-  }
   fit();
   addEventListener('resize', fit);
 
@@ -83,5 +89,10 @@
   wall.addEventListener('scroll', function () {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
   }, { passive: true });
+
+  // Start with the first work centred, without animating the jump.
+  wall.style.scrollBehavior = 'auto';
+  works[0].scrollIntoView({ inline: 'center', block: 'nearest' });
+  wall.style.scrollBehavior = '';
   update();
 })();
