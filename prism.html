@@ -1,0 +1,37 @@
+---
+layout: null
+permalink: /prism/
+---
+<!DOCTYPE html>
+<html lang="en" data-view="single">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Prism</title>
+    <link rel="stylesheet" href="{{ '/assets/prism/prism.css' | relative_url }}">
+  </head>
+  <body>
+    <header class="prism-bar">
+      <span class="prism-title"><a href="{{ '/' | relative_url }}">Prism</a></span>
+      <nav class="prism-group" id="prism-pages" aria-label="Page"></nav>
+      <span class="prism-spacer"></span>
+      <span class="prism-hint">← → restyle · G compare</span>
+      <button type="button" id="prism-view" aria-pressed="false">Compare all</button>
+      <a class="prism-link" id="prism-open" href="{{ '/paintings/' | relative_url }}" target="_blank" rel="noopener">Open page ↗</a>
+    </header>
+
+    <div class="prism-bar">
+      <div class="prism-group" id="prism-styles" role="toolbar" aria-label="Restyle"></div>
+    </div>
+
+    <main class="prism-stage">
+      <div id="prism-live">
+        <iframe title="Site preview"></iframe>
+      </div>
+      <div id="prism-grid" aria-label="All restyles"></div>
+    </main>
+
+    <script src="{{ '/assets/prism/prism.js' | relative_url }}"></script>
+  </body>
+</html>

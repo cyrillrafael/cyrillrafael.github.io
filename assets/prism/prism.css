@@ -1,0 +1,221 @@
+/* Chrome for /prism/: the site's own Menlo-on-wall register, kept out of the way of the page it frames. */
+
+:root {
+  --wall: #eeece8;
+  --ink: #1a1a1a;
+  --mute: #6f6c66;
+  --line: rgba(0, 0, 0, 0.12);
+  --accent: #0000ee;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+  font-family: Menlo, 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--wall);
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100vh;
+  height: 100dvh; /* not clipped by mobile browser bars */
+  overflow: hidden;
+}
+
+/* ---------- bars ---------- */
+
+.prism-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5em;
+  padding: 0.9em 1.25em;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.prism-title { font-weight: bold; letter-spacing: 0.04em; white-space: nowrap; }
+.prism-title a { color: inherit; text-decoration: none; }
+
+.prism-group {
+  display: flex;
+  gap: 0.25em;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+.prism-group::-webkit-scrollbar { display: none; }
+
+.prism-spacer { flex: 1; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.45em 0.95em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+button:hover { border-color: var(--line); }
+
+button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--wall);
+}
+
+button:focus-visible,
+.prism-card:focus-visible,
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.prism-link { color: var(--mute); text-decoration: none; white-space: nowrap; }
+.prism-link:hover { color: var(--ink); }
+
+/* Restyle buttons carry a second line describing the proposal */
+#prism-styles button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: 10px;
+  padding: 0.5em 0.9em;
+  text-align: left;
+}
+
+.prism-note {
+  font-size: 0.8em;
+  color: var(--mute);
+  transition: color 0.35s var(--ease);
+}
+
+button[aria-pressed="true"] .prism-note { color: rgba(238, 236, 232, 0.7); }
+
+.prism-hint { color: var(--mute); white-space: nowrap; }
+
+/* ---------- stage ---------- */
+
+.prism-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Single view: one live page */
+#prism-live {
+  position: absolute;
+  inset: 0.9em 1.25em 1.25em;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 20px 50px -25px rgba(0, 0, 0, 0.35);
+  view-transition-name: prism-stage;
+}
+
+#prism-live iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+#prism-live.is-ready iframe { opacity: 1; }
+
+/* Grid view: every restyle side by side */
+#prism-grid {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 1em 1.25em 2em;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5em;
+  align-content: start;
+}
+
+[data-view="single"] #prism-grid { display: none; }
+[data-view="grid"] #prism-live { display: none; }
+
+.prism-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  cursor: pointer;
+  border-radius: 12px;
+  transform: translateY(0);
+  transition: transform 0.45s var(--ease);
+}
+
+.prism-card:hover { transform: translateY(-4px); }
+
+.prism-card.is-current { view-transition-name: prism-stage; }
+
+.prism-thumb {
+  --prism-scale: 0.25;
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 14px 30px -18px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.45s var(--ease);
+}
+
+.prism-card:hover .prism-thumb,
+.prism-card.is-current .prism-thumb {
+  box-shadow: 0 0 0 2px var(--ink), 0 22px 40px -20px rgba(0, 0, 0, 0.45);
+}
+
+/* Render at desktop width, scale to the card */
+.prism-thumb iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1280px;
+  height: calc(100% / var(--prism-scale));
+  border: 0;
+  transform: scale(var(--prism-scale));
+  transform-origin: 0 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.prism-card.is-ready iframe { opacity: 1; }
+
+.prism-card-label { display: flex; flex-direction: column; gap: 0.15em; padding: 0 0.2em; }
+.prism-card-label .prism-name { font-weight: bold; }
+
+/* ---------- motion between views ---------- */
+
+::view-transition-group(prism-stage) {
+  animation-duration: 0.6s;
+  animation-timing-function: var(--ease);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+    animation-duration: 0.01s !important;
+    transition-duration: 0.01s !important;
+  }
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 720px) {
+  .prism-bar { gap: 0.8em; padding: 0.7em 1em; flex-wrap: wrap; }
+  .prism-spacer, .prism-hint { display: none; }
+  #prism-live { inset: 0.6em 0.6em 0.8em; border-radius: 10px; }
+  #prism-grid { grid-template-columns: 1fr; padding: 0.8em 1em 2em; }
+}
