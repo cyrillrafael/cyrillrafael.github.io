@@ -309,6 +309,17 @@ html.prism-swiss .dimensions { font-weight: normal; color: #555; }
 html.prism-swiss .painted-background { background: #fff; }
 html.prism-swiss .painted-background .content { background: transparent; }
 
+/* ---------- Quieter navigation for the layout restyles ---------- */
+
+html.prism-wall .horizontal-list,
+html.prism-scale .horizontal-list,
+html.prism-slow .horizontal-list,
+html.prism-index .horizontal-list {
+  font-size: 1rem;
+  gap: 1.6em;
+  padding: 1em 0;
+}
+
 /* ---------- Scale reference (shared by Long wall and True scale) ---------- */
 /* prism.js sets --h-cm on each .painting from its stated dimensions and adds one
    .prism-figure: a 175 cm person drawn at the same centimetres-to-pixels ratio. */

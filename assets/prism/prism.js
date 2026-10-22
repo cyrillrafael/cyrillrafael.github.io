@@ -157,6 +157,16 @@
     var doc;
     try { doc = frame.contentDocument; } catch (e) { doc = null; }
     if (!doc || !doc.head) { if (onReady) onReady(null); return; } // navigated off-site
+    // The first dressing of a page appears at once; only later restyles animate.
+    doc.documentElement.classList.add('prism-switching');
+    var settle = onReady;
+    onReady = function (d) {
+      var win = doc.defaultView;
+      win.requestAnimationFrame(function () {
+        win.requestAnimationFrame(function () { doc.documentElement.classList.remove('prism-switching'); });
+      });
+      if (settle) settle(d);
+    };
     measure(doc);
     setClass(doc, style);
     // Links leaving the site open in a new tab instead of inside the frame.
