@@ -19,10 +19,17 @@
   // fits ~80% of the screen — whichever is tighter (on phones, the width). A rare
   // outlier (one listed work is 500 cm) may overrun rather than shrink every other work.
   function fit() {
+    var keep = typeof current === 'function' && works.length ? current() : 0;
     var byHeight = (wall.clientHeight * 0.72) / Math.max(175, p90(heights, 220));
     var byWidth = (wall.clientWidth * 0.8) / p90(widths, 130);
     var px = Math.min(byHeight, byWidth);
     document.documentElement.style.setProperty('--cm', px.toFixed(3) + 'px');
+    // Resizing works moves them; keep the same work centred.
+    if (works[keep]) {
+      wall.style.scrollBehavior = 'auto';
+      works[keep].scrollIntoView({ inline: 'center', block: 'nearest' });
+      wall.style.scrollBehavior = '';
+    }
   }
 
   // Dimensions are written height × width ("220x120cm"). The photo's proportions
