@@ -1,0 +1,146 @@
+---
+layout: null
+permalink: /directions/
+---
+{%- comment -%}
+  Four whole-site directions as live prototypes, built from the site's real data.
+  Order matches the "Hanging the Work" deck. Leaf with the tabs, arrow keys or a
+  swipe; the sliding is CSS scroll-snap.
+{%- endcomment -%}
+{%- assign meta = site.data.titles -%}
+{%- assign works = "" | split: "" -%}
+{%- for f in site.static_files -%}
+  {%- assign rel = f.path | remove_first: site.source -%}
+  {%- if rel contains '/paintings/' -%}
+    {%- assign ext = f.extname | downcase -%}
+    {%- if ext == '.jpg' or ext == '.jpeg' or ext == '.png' -%}{%- assign works = works | push: f -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign works = works | sort: "path" | reverse -%}
+{%- assign years = "" | split: "" -%}
+{%- for art in works -%}
+  {%- assign fn = art.path | remove_first: '/paintings/' -%}
+  {%- assign y = fn | split: ' ' | first -%}
+  {%- assign years = years | push: y -%}
+{%- endfor -%}
+{%- assign years = years | uniq -%}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Directions</title>
+    <link rel="stylesheet" href="{{ '/assets/directions/directions.css' | relative_url }}">
+    <style>
+      {%- for y in years %}
+      .cat:has(#y{{ y }}:checked) .row:not([data-year="{{ y }}"]) { display: none; }
+      {%- endfor %}
+    </style>
+  </head>
+  <body>
+    <header class="bar">
+      <a class="home" href="{{ '/' | relative_url }}">Cyrill Rafael Vasilyev</a>
+      <nav class="tabs" aria-label="Directions">
+        <button type="button"><span>1</span> Gallery</button>
+        <button type="button"><span>2</span> Studio notebook</button>
+        <button type="button"><span>3</span> Catalogue</button>
+        <button type="button"><span>4</span> Rooms</button>
+      </nav>
+      <span class="hint">← → to leaf</span>
+    </header>
+
+    <main class="leaf" tabindex="-1">
+
+      <!-- 1 · Gallery: the live long wall -->
+      <section class="panel" id="gallery" aria-label="Gallery">
+        <iframe src="{{ '/wall/' | relative_url }}" title="The long wall" loading="lazy"></iframe>
+        <p class="tag">1 · Gallery — the home page is the wall</p>
+      </section>
+
+      <!-- 2 · Studio notebook: each work with its notes, pigments and notebook pages -->
+      <section class="panel scroll" id="notebook" aria-label="Studio notebook">
+        {%- for art in works limit: 6 -%}
+          {%- assign fn = art.path | remove_first: '/paintings/' -%}
+          {%- assign esc = fn | uri_escape -%}
+          {%- assign parts = fn | split: ' ' -%}
+          {%- assign year = parts[0] | plus: 0 -%}
+          {%- assign title = parts | slice: 1, parts.size | join: ' ' | remove: art.extname -%}
+          {%- assign dims = "" -%}
+          {%- for item in meta -%}{%- if item.year == year and item.title == title -%}{%- assign dims = item.dimensions -%}{%- break -%}{%- endif -%}{%- endfor %}
+        <article class="spread">
+          <img class="plate" src="{{ '/paintings/' | append: esc | relative_url }}" alt="{{ title }}" loading="lazy">
+          <div class="leafnote">
+            <h2>{{ title }}</h2>
+            <p class="meta">{{ year }} · {{ dims }}</p>
+            <h3>Notes</h3>
+            <p class="empty">No notes written yet.</p>
+            <h3>Pigments</h3>
+            <p class="empty">Pigments not yet recorded.</p>
+            <h3>From the notebook</h3>
+            <div class="pages"><p class="empty">Page scan</p><p class="empty">Page scan</p></div>
+          </div>
+        </article>
+        {%- endfor %}
+        <p class="tag">2 · Studio notebook — real works, empty notes; nothing invented</p>
+      </section>
+
+      <!-- 3 · Catalogue: the index as home page -->
+      <section class="panel scroll" id="catalogue" aria-label="Catalogue">
+        <div class="cat">
+          <div class="chips" role="radiogroup" aria-label="Year">
+            <input type="radio" name="year" id="yall" checked><label for="yall">All</label>
+            {%- for y in years %}
+            <input type="radio" name="year" id="y{{ y }}"><label for="y{{ y }}">{{ y }}</label>
+            {%- endfor %}
+          </div>
+          <div class="table" role="table">
+            <div class="row head" role="row"><span>Title</span><span>Year</span><span>Size (cm)</span><span>Medium</span><span>Status</span></div>
+            {%- for art in works -%}
+              {%- assign fn = art.path | remove_first: '/paintings/' -%}
+              {%- assign esc = fn | uri_escape -%}
+              {%- assign parts = fn | split: ' ' -%}
+              {%- assign year = parts[0] | plus: 0 -%}
+              {%- assign title = parts | slice: 1, parts.size | join: ' ' | remove: art.extname -%}
+              {%- assign dims = "—" -%}
+              {%- for item in meta -%}{%- if item.year == year and item.title == title -%}{%- assign dims = item.dimensions | remove: 'cm' | replace: 'x', ' × ' -%}{%- break -%}{%- endif -%}{%- endfor %}
+            <div class="row" role="row" data-year="{{ year }}" tabindex="0">
+              <span>{{ title }}</span><span>{{ year }}</span><span>{{ dims }}</span><span class="todo">to add</span><span class="todo">to add</span>
+              <img src="{{ '/paintings/' | append: esc | relative_url }}" alt="{{ title }}" loading="lazy">
+            </div>
+            {%- endfor %}
+          </div>
+        </div>
+        <p class="tag">3 · Catalogue — medium and status columns wait on data</p>
+      </section>
+
+      <!-- 4 · Rooms: a show as a room -->
+      <section class="panel scroll" id="rooms" aria-label="Rooms">
+        <div class="room">
+          <header class="roomhead">
+            <h2>Fields of Air</h2>
+            <p class="meta">SeeLab, The Hague · 2024 · solo</p>
+            <svg class="plan" viewBox="0 0 300 220" aria-label="Schematic floor plan; not to scale">
+              <rect x="10" y="10" width="280" height="200" fill="none" stroke="#1c1b19" stroke-width="3"/>
+              <rect x="10" y="50" width="6" height="90" fill="#a3441f"/>
+              <rect x="90" y="10" width="120" height="6" fill="#2338a8"/>
+              <rect x="284" y="90" width="6" height="100" fill="#a3441f"/>
+              <circle cx="150" cy="130" r="8" fill="#8a8578"/>
+            </svg>
+            <p class="small">Plan is schematic, not drawn from the venue.</p>
+          </header>
+          <div class="views">
+            {%- for f in site.static_files -%}
+              {%- if f.path contains '/installation2025/' and f.name contains 'fields of air' -%}
+            <img src="{{ f.path | uri_escape | relative_url }}" alt="Fields of Air, installation view" loading="lazy">
+              {%- endif -%}
+            {%- endfor %}
+          </div>
+        </div>
+        <p class="tag">4 · Rooms — one show, real installation views</p>
+      </section>
+
+    </main>
+    <script src="{{ '/assets/directions/directions.js' | relative_url }}"></script>
+  </body>
+</html>
