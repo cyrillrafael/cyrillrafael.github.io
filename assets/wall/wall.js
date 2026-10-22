@@ -7,14 +7,21 @@
   var works = Array.prototype.slice.call(wall.querySelectorAll('.painting'));
   var count = document.querySelector('.wall-count');
   var heights = []; // current height in cm of each work
+  var widths = [];
+
+  function p90(list, fallback) {
+    var s = list.filter(Boolean).slice().sort(function (x, y) { return x - y; });
+    return s.length ? s[Math.floor((s.length - 1) * 0.9)] : fallback;
+  }
 
   // Fit the scale to the works as they are: the 90th-percentile height (or the 175 cm
-  // figure, whichever is taller) fills ~72% of the wall. A rare outlier — one listed
-  // work is 500 cm — may run past the wall rather than shrink every other work.
+  // figure, whichever is taller) fills ~72% of the wall, and the 90th-percentile width
+  // fits ~80% of the screen — whichever is tighter (on phones, the width). A rare
+  // outlier (one listed work is 500 cm) may overrun rather than shrink every other work.
   function fit() {
-    var hs = heights.filter(Boolean).slice().sort(function (x, y) { return x - y; });
-    var p90 = hs.length ? hs[Math.floor((hs.length - 1) * 0.9)] : 220;
-    var px = (wall.clientHeight * 0.72) / Math.max(175, p90);
+    var byHeight = (wall.clientHeight * 0.72) / Math.max(175, p90(heights, 220));
+    var byWidth = (wall.clientWidth * 0.8) / p90(widths, 130);
+    var px = Math.min(byHeight, byWidth);
     document.documentElement.style.setProperty('--cm', px.toFixed(3) + 'px');
   }
 
@@ -31,6 +38,7 @@
       p.style.setProperty('--h-cm', h);
       p.style.setProperty('--w-cm', w);
       heights[i] = h;
+      widths[i] = w;
     };
     apply(a, b);
     var check = function () {

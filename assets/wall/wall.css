@@ -120,6 +120,11 @@ body.wall .dimensions { font-weight: normal; }
   pointer-events: none;
 }
 
+/* On phones the figure stands in front of the work; let the painting read through */
+@media (max-width: 768px) {
+  .wall-figure { opacity: 0.22; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.wall .gallery { scroll-behavior: auto; }
   body.wall .painting { animation: none; }
