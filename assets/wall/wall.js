@@ -25,11 +25,14 @@
     var px = Math.min(byHeight, byWidth);
     document.documentElement.style.setProperty('--cm', px.toFixed(3) + 'px');
     // Resizing works moves them; keep the same work centred.
-    if (works[keep]) {
-      wall.style.scrollBehavior = 'auto';
-      works[keep].scrollIntoView({ inline: 'center', block: 'nearest' });
-      wall.style.scrollBehavior = '';
-    }
+    if (works[keep]) centre(works[keep], true);
+  }
+
+  // Centre a work by scrolling the wall itself. Not scrollIntoView: that also
+  // scrolls every ancestor, including a page that frames this one (/directions/).
+  function centre(p, instant) {
+    var left = p.offsetLeft - (wall.clientWidth - p.offsetWidth) / 2;
+    wall.scrollTo({ left: left, behavior: instant ? 'auto' : 'smooth' });
   }
 
   // Dimensions are written height × width ("220x120cm"). The photo's proportions
@@ -80,8 +83,7 @@
   }
 
   function show(i) {
-    var p = works[Math.max(0, Math.min(works.length - 1, i))];
-    p.scrollIntoView({ inline: 'center', block: 'nearest' });
+    centre(works[Math.max(0, Math.min(works.length - 1, i))], false);
   }
 
   // Arrow keys and Home/End move one work at a time.
@@ -106,8 +108,6 @@
   }, { passive: true });
 
   // Start with the first work centred, without animating the jump.
-  wall.style.scrollBehavior = 'auto';
-  works[0].scrollIntoView({ inline: 'center', block: 'nearest' });
-  wall.style.scrollBehavior = '';
+  centre(works[0], true);
   update();
 })();

@@ -89,7 +89,8 @@ body {
 
 /* Each panel arrives: settles from a slight scale as it snaps in */
 @supports (animation-timeline: view()) {
-  .panel > * {
+  /* Not the caption: an animated opacity would override its show-only-when-current rule */
+  .panel > :not(.tag) {
     animation: settle linear both;
     animation-timeline: view(inline);
     animation-range: entry 0% cover 50%;
@@ -246,6 +247,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .leaf { scroll-behavior: auto; }
-  .panel > * { animation: none; }
+  .panel > :not(.tag) { animation: none; }
   * { transition-duration: 0.01s !important; }
 }

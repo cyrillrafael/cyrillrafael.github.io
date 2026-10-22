@@ -33,6 +33,7 @@ body.wall .content {
 /* ---------- the wall ---------- */
 
 body.wall .gallery {
+  position: relative;             /* offsetLeft of each work is measured from the wall */
   display: flex;
   align-items: center;            /* shared eye-line */
   gap: 12vw;
